@@ -902,3 +902,211 @@ footer > p {
     width: auto;
   }
 }
+/* =========================================
+   ARYANX DIGITAL - DATABASE DASHBOARD
+========================================= */
+
+.backend-section {
+  padding: 100px 7%;
+  background: transparent;
+  position: relative;
+}
+
+.backend-section .section-heading {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 45px;
+}
+
+.backend-section .section-heading span {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.backend-section .section-heading h2 {
+  margin: 0;
+  font-size: 46px;
+  line-height: 1.1;
+}
+
+.backend-section .section-heading em {
+  font-style: normal;
+}
+
+.backend-section .section-heading p {
+  margin-top: 18px;
+  color: #667085;
+  line-height: 1.7;
+}
+
+/* DATABASE MAIN PANEL */
+
+.backend-form {
+  max-width: 900px;
+  margin: 0 auto 70px;
+  padding: 35px;
+  background: #ffffff;
+  border: 1px solid #e7ebf2;
+  border-radius: 20px;
+  box-shadow: 0 15px 45px rgba(15, 23, 42, 0.08);
+}
+
+.backend-form h3 {
+  margin: 0 0 25px;
+  font-size: 24px;
+}
+
+.backend-form form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.backend-form input,
+.backend-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 17px;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.backend-form textarea {
+  grid-column: 1 / -1;
+  resize: vertical;
+}
+
+.backend-form input:focus,
+.backend-form textarea:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.06);
+}
+
+.backend-form .primary-btn {
+  grid-column: 1 / -1;
+  border: none;
+  cursor: pointer;
+  padding: 15px 25px;
+  border-radius: 10px;
+}
+
+/* LIVE DATA AREA */
+
+.backend-data-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.backend-card {
+  background: #ffffff;
+  border: 1px solid #e7ebf2;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.backend-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
+}
+
+.backend-card > span {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 15px;
+  opacity: 0.6;
+}
+
+.backend-card h3 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+
+.backend-card p {
+  color: #667085;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.backend-card small {
+  display: block;
+  padding: 10px 12px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  color: #667085;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+/* EDIT INPUTS */
+
+.backend-card input,
+.backend-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  margin-top: 10px;
+  border: 1px solid #dce2ea;
+  border-radius: 9px;
+  font-family: inherit;
+  outline: none;
+}
+
+.backend-card textarea {
+  resize: vertical;
+  margin-bottom: 5px;
+}
+
+/* LOADING / EMPTY */
+
+.backend-loading {
+  text-align: center;
+  color: #667085;
+  padding: 30px;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  .backend-section {
+    padding: 70px 5%;
+  }
+
+  .backend-section .section-heading h2 {
+    font-size: 34px;
+  }
+
+  .backend-form {
+    padding: 24px;
+  }
+
+  .backend-form form {
+    grid-template-columns: 1fr;
+  }
+
+  .backend-form textarea,
+  .backend-form .primary-btn {
+    grid-column: auto;
+  }
+
+  .backend-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
