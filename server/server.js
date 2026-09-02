@@ -6,6 +6,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 const Test = require("./models/Test");
 
 const app = express();
@@ -31,6 +32,12 @@ app.get("/api/test", (req, res) => {
 app.post("/api/test", async (req, res) => {
   try {
     const { name, message } = req.body;
+        if (!name || !name.trim() || !message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and message are required"
+      });
+    }
 
     const newTest = new Test({
       name,
@@ -78,6 +85,12 @@ app.get("/api/tests", async (req, res) => {
 
 // UPDATE - PUT
 app.put("/api/test/:id", async (req, res) => {
+    if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid record ID"
+    });
+  }
   try {
     const { name, message } = req.body;
 
@@ -118,6 +131,12 @@ app.put("/api/test/:id", async (req, res) => {
 
 // DELETE
 app.delete("/api/test/:id", async (req, res) => {
+    if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid record ID"
+    });
+  }
   try {
     const deletedTest = await Test.findByIdAndDelete(req.params.id);
 

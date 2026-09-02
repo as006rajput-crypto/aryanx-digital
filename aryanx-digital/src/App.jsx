@@ -3,12 +3,10 @@ import "./App.css";
 
 function App() {
   const [tests, setTests] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editMessage, setEditMessage] = useState("");
@@ -16,29 +14,36 @@ function App() {
   // =========================
   // GET ALL DATA
   // =========================
+
   const loadData = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const response = await fetch("http://localhost:5000/api/tests");
-      const result = await response.json();
+    const response = await fetch("http://localhost:5000/api/tests");
 
-      if (result.success) {
-        setTests(result.data);
-      } else {
-        setTests([]);
-      }
-    } catch (error) {
-      console.error("API Error:", error);
-      setTests([]);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error("Server error");
     }
-  };
 
+    const result = await response.json();
+
+    if (result.success) {
+      setTests(result.data);
+    } else {
+      setTests([]);
+    }
+  } catch (error) {
+    console.error("API Error:", error);
+    setTests([]);
+    alert("Unable to connect to server. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
   // =========================
   // ADD DATA
   // =========================
+
   const addData = async (e) => {
     e.preventDefault();
 
@@ -50,25 +55,26 @@ function App() {
     setSaving(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/test", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          message,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5000/api/test",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            message,
+          }),
+        }
+      );
 
       const result = await response.json();
 
       if (result.success) {
         setTests((prev) => [result.data, ...prev]);
-
         setName("");
         setMessage("");
-
         alert("Data added successfully!");
       } else {
         alert(result.message || "Failed to add data");
@@ -84,6 +90,7 @@ function App() {
   // =========================
   // DELETE DATA
   // =========================
+
   const deleteData = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this record?"
@@ -102,7 +109,10 @@ function App() {
       const result = await response.json();
 
       if (result.success) {
-        setTests((prev) => prev.filter((test) => test._id !== id));
+        setTests((prev) =>
+          prev.filter((test) => test._id !== id)
+        );
+
         alert("Data deleted successfully!");
       } else {
         alert(result.message || "Failed to delete data");
@@ -116,6 +126,7 @@ function App() {
   // =========================
   // START EDIT
   // =========================
+
   const startEdit = (test) => {
     setEditingId(test._id);
     setEditName(test.name);
@@ -125,6 +136,7 @@ function App() {
   // =========================
   // CANCEL EDIT
   // =========================
+
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
@@ -134,6 +146,7 @@ function App() {
   // =========================
   // UPDATE DATA
   // =========================
+
   const updateData = async (id) => {
     if (!editName.trim() || !editMessage.trim()) {
       alert("Please fill all fields");
@@ -179,6 +192,7 @@ function App() {
   // =========================
   // LOAD DATA ON PAGE LOAD
   // =========================
+
   useEffect(() => {
     loadData();
   }, []);
@@ -189,6 +203,7 @@ function App() {
       {/* =========================
           NAVBAR
       ========================= */}
+
       <nav className="navbar">
         <div className="logo">
           <img src="/logo.jpg" alt="AryanX Digital" />
@@ -210,8 +225,10 @@ function App() {
       {/* =========================
           HERO
       ========================= */}
+
       <section className="hero">
         <div className="hero-content">
+
           <div className="badge">
             ✦ AI-POWERED DIGITAL GROWTH
           </div>
@@ -256,6 +273,7 @@ function App() {
         </div>
 
         {/* HERO CARD */}
+
         <div className="hero-card">
           <div className="card-glow"></div>
 
@@ -288,6 +306,7 @@ function App() {
       {/* =========================
           SERVICES
       ========================= */}
+
       <section className="section" id="services">
         <div className="section-heading">
           <span>OUR SERVICES</span>
@@ -379,6 +398,7 @@ function App() {
       {/* =========================
           AI SECTION
       ========================= */}
+
       <section className="ai-section" id="ai">
         <div className="ai-content">
 
@@ -398,7 +418,6 @@ function App() {
           </p>
 
           <div className="ai-features">
-
             <div>
               <strong>01</strong>
               <span>AI Customer Support</span>
@@ -413,7 +432,6 @@ function App() {
               <strong>03</strong>
               <span>Smart Business Analytics</span>
             </div>
-
           </div>
         </div>
 
@@ -450,9 +468,11 @@ function App() {
       {/* =========================
           ABOUT
       ========================= */}
+
       <section className="about" id="about">
 
         <div className="about-heading">
+
           <span className="section-label">
             ABOUT ARYANX DIGITAL
           </span>
@@ -462,6 +482,7 @@ function App() {
             <br />
             <span>systems that grow.</span>
           </h2>
+
         </div>
 
         <div className="about-content">
@@ -502,6 +523,7 @@ function App() {
       {/* =========================
           WHY ARYANX
       ========================= */}
+
       <section className="why-section">
 
         <div className="section-heading">
@@ -573,10 +595,12 @@ function App() {
       {/* =========================
           DATABASE / ADMIN PANEL
       ========================= */}
+
       <section
         className="backend-section"
         id="database"
       >
+
         <div className="section-heading">
 
           <span>ARYANX DIGITAL DATABASE</span>
@@ -595,6 +619,7 @@ function App() {
         </div>
 
         {/* ADD DATA FORM */}
+
         <div className="backend-form">
 
           <h3>Add New Record</h3>
@@ -627,7 +652,9 @@ function App() {
         </div>
 
         {/* LIVE DATA */}
+
         <div className="section-heading">
+
           <span>LIVE BACKEND DATA</span>
 
           <h2>
@@ -640,17 +667,25 @@ function App() {
             This data is coming directly from our Express API
             and MongoDB Atlas database.
           </p>
+
         </div>
 
+        {/* LOADING / EMPTY / DATA */}
+
         {loading ? (
+
           <p className="backend-loading">
             Loading data...
           </p>
+
         ) : tests.length === 0 ? (
+
           <p className="backend-loading">
             No data found.
           </p>
+
         ) : (
+
           <div className="backend-data-grid">
 
             {tests.map((test) => (
@@ -663,7 +698,9 @@ function App() {
                 {editingId === test._id ? (
 
                   <>
-                    <span>EDIT DATABASE RECORD</span>
+                    <span>
+                      EDIT DATABASE RECORD
+                    </span>
 
                     <input
                       type="text"
@@ -689,6 +726,7 @@ function App() {
                         flexWrap: "wrap",
                       }}
                     >
+
                       <button
                         type="button"
                         className="primary-btn"
@@ -712,12 +750,14 @@ function App() {
                       >
                         Cancel
                       </button>
+
                     </div>
                   </>
 
                 ) : (
 
                   <>
+
                     <span>
                       DATABASE RECORD
                     </span>
@@ -742,6 +782,7 @@ function App() {
                         flexWrap: "wrap",
                       }}
                     >
+
                       <button
                         type="button"
                         onClick={() =>
@@ -771,37 +812,45 @@ function App() {
                       >
                         Delete
                       </button>
+
                     </div>
+
                   </>
                 )}
 
               </div>
-
             ))}
 
           </div>
         )}
 
         {/* REFRESH BUTTON */}
+
         <div
           style={{
             textAlign: "center",
             marginTop: "30px",
           }}
         >
+
           <button
             type="button"
             onClick={loadData}
+            disabled={loading}
             style={{
               padding: "12px 24px",
               borderRadius: "8px",
               border: "1px solid #ccc",
               background: "transparent",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.6 : 1,
             }}
           >
-            🔄 Refresh Database
+            {loading
+              ? "Loading..."
+              : "🔄 Refresh Database"}
           </button>
+
         </div>
 
       </section>
@@ -809,6 +858,7 @@ function App() {
       {/* =========================
           CONTACT / CTA
       ========================= */}
+
       <section className="cta" id="contact">
 
         <div className="cta-content">
@@ -894,6 +944,7 @@ function App() {
             name="type"
             required
           >
+
             <option value="">
               Select Business Type
             </option>
@@ -929,6 +980,7 @@ function App() {
             <option value="Other">
               Other
             </option>
+
           </select>
 
           <button
@@ -944,6 +996,7 @@ function App() {
       {/* =========================
           FOOTER
       ========================= */}
+
       <footer>
 
         <div className="footer-logo">
@@ -956,6 +1009,7 @@ function App() {
         </p>
 
         <div className="footer-links">
+
           <a href="#services">
             Services
           </a>
@@ -975,6 +1029,7 @@ function App() {
           <a href="#contact">
             Contact
           </a>
+
         </div>
 
         <div className="copyright">
