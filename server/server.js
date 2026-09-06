@@ -8,6 +8,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 const Test = require("./models/Test");
+const Lead = require("./models/Lead");
 
 const app = express();
 
@@ -162,7 +163,99 @@ app.delete("/api/test/:id", async (req, res) => {
     });
   }
 });
+// LEAD API - Save Contact Form Enquiry
+app.post("/api/leads", async (req, res) => {
+  try {
+    const { business, name, phone, email, type } = req.body;
 
+    if (!business || !name || !phone || !email || !type) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
+
+    const newLead = new Lead({
+      business,
+      name,
+      phone,
+      email,
+      type
+    });
+
+    const savedLead = await newLead.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Lead saved successfully",
+      data: savedLead
+    });
+  } catch (error) {
+    console.error("POST /api/leads error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to save lead",
+      error: error.message
+    });
+  }
+});
+// GET ALL LEADS
+app.get("/api/leads", async (req, res) => {
+  try {
+    const leads = await Lead.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: leads.length,
+      data: leads
+    });
+  } catch (error) {
+    console.error("GET /api/leads error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch leads",
+      error: error.message
+    });
+  }
+});
+// DELETE LEAD
+app.delete("/api/leads/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid lead ID"
+      });
+    }
+
+    const deletedLead = await Lead.findByIdAndDelete(id);
+
+    if (!deletedLead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Lead deleted successfully",
+      data: deletedLead
+    });
+  } catch (error) {
+    console.error("DELETE /api/leads error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete lead",
+      error: error.message
+    });
+  }
+});
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGODB_URI)

@@ -1,45 +1,115 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+const API = (endpoint) => `${API_URL}${endpoint}`;
+
 function App() {
   const [tests, setTests] = useState([]);
+  const [leads, setLeads] = useState([]);
+const [leadsLoading, setLeadsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [leadSearch, setLeadSearch] = useState("");
+  const [deletingLeadId, setDeletingLeadId] = useState(null);
+
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+
   const [saving, setSaving] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editMessage, setEditMessage] = useState("");
+
+  const [toast, setToast] = useState(null);
+
+  // =========================
+  // TOAST NOTIFICATION
+  // =========================
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+
+    setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
 
   // =========================
   // GET ALL DATA
   // =========================
 
   const loadData = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await fetch("http://localhost:5000/api/tests");
+      const response = await fetch(API("/api/tests"));
 
-    if (!response.ok) {
-      throw new Error("Server error");
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setTests(result.data);
+      } else {
+        setTests([]);
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      setTests([]);
+      showToast("Unable to connect to server.", "error");
+    } finally {
+      setLoading(false);
     }
+  };
+  // =========================
+// GET ALL LEADS
+// =========================
+const loadLeads = async () => {
+  try {
+    setLeadsLoading(true);
 
+    const response = await fetch(API("/api/leads"));
     const result = await response.json();
 
     if (result.success) {
-      setTests(result.data);
+      setLeads(result.data);
     } else {
-      setTests([]);
+      setLeads([]);
     }
   } catch (error) {
-    console.error("API Error:", error);
-    setTests([]);
-    alert("Unable to connect to server. Please try again.");
+    console.error("Leads API Error:", error);
+    setLeads([]);
+    showToast("Unable to load leads.", "error");
   } finally {
-    setLoading(false);
+    setLeadsLoading(false);
   }
 };
+
+  // =========================
+  // REFRESH DATA
+  // =========================
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      await loadData();
+
+      showToast("Data refreshed successfully!", "success");
+    } catch (error) {
+      console.error("Refresh Error:", error);
+      showToast("Unable to refresh data.", "error");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   // =========================
   // ADD DATA
   // =========================
@@ -48,40 +118,42 @@ function App() {
     e.preventDefault();
 
     if (!name.trim() || !message.trim()) {
-      alert("Please fill all fields");
+      showToast("Please fill all fields.", "error");
       return;
     }
 
     setSaving(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/test",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            message,
-          }),
-        }
-      );
+      const response = await fetch(API("/api/test"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          message,
+        }),
+      });
 
       const result = await response.json();
 
       if (result.success) {
         setTests((prev) => [result.data, ...prev]);
+
         setName("");
         setMessage("");
-        alert("Data added successfully!");
+
+        showToast("Data added successfully!", "success");
       } else {
-        alert(result.message || "Failed to add data");
+        showToast(
+          result.message || "Failed to add data.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Add Data Error:", error);
-      alert("Backend connection failed");
+      showToast("Backend connection failed.", "error");
     } finally {
       setSaving(false);
     }
@@ -98,13 +170,12 @@ function App() {
 
     if (!confirmDelete) return;
 
+    setDeletingId(id);
+
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/test/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(API(`/api/test/${id}`), {
+        method: "DELETE",
+      });
 
       const result = await response.json();
 
@@ -113,13 +184,18 @@ function App() {
           prev.filter((test) => test._id !== id)
         );
 
-        alert("Data deleted successfully!");
+        showToast("Data deleted successfully!", "success");
       } else {
-        alert(result.message || "Failed to delete data");
+        showToast(
+          result.message || "Failed to delete data.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Delete Error:", error);
-      alert("Backend connection failed");
+      showToast("Backend connection failed.", "error");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -149,24 +225,23 @@ function App() {
 
   const updateData = async (id) => {
     if (!editName.trim() || !editMessage.trim()) {
-      alert("Please fill all fields");
+      showToast("Please fill all fields.", "error");
       return;
     }
 
+    setUpdatingId(id);
+
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/test/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editName,
-            message: editMessage,
-          }),
-        }
-      );
+      const response = await fetch(API(`/api/test/${id}`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: editName,
+          message: editMessage,
+        }),
+      });
 
       const result = await response.json();
 
@@ -179,13 +254,18 @@ function App() {
 
         cancelEdit();
 
-        alert("Data updated successfully!");
+        showToast("Data updated successfully!", "success");
       } else {
-        alert(result.message || "Failed to update data");
+        showToast(
+          result.message || "Failed to update data.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Update Error:", error);
-      alert("Backend connection failed");
+      showToast("Backend connection failed.", "error");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -194,11 +274,42 @@ function App() {
   // =========================
 
   useEffect(() => {
-    loadData();
-  }, []);
+  loadData();
+  loadLeads();
+}, []);
 
   return (
     <div className="app">
+
+      {/* =========================
+          TOAST
+      ========================= */}
+
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          <div className="toast-icon">
+            {toast.type === "success" ? "✓" : "!"}
+          </div>
+
+          <div className="toast-content">
+            <strong>
+              {toast.type === "success"
+                ? "Success"
+                : "Error"}
+            </strong>
+
+            <span>{toast.message}</span>
+          </div>
+
+          <button
+            type="button"
+            className="toast-close"
+            onClick={() => setToast(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* =========================
           NAVBAR
@@ -272,8 +383,6 @@ function App() {
           </div>
         </div>
 
-        {/* HERO CARD */}
-
         <div className="hero-card">
           <div className="card-glow"></div>
 
@@ -308,6 +417,7 @@ function App() {
       ========================= */}
 
       <section className="section" id="services">
+
         <div className="section-heading">
           <span>OUR SERVICES</span>
 
@@ -347,6 +457,7 @@ function App() {
           </div>
 
           <div className="service-card featured">
+
             <div className="popular">
               MOST POPULAR
             </div>
@@ -372,6 +483,7 @@ function App() {
           </div>
 
           <div className="service-card">
+
             <div className="service-icon">◎</div>
 
             <h3>AI Business</h3>
@@ -400,6 +512,7 @@ function App() {
       ========================= */}
 
       <section className="ai-section" id="ai">
+
         <div className="ai-content">
 
           <span className="section-label">
@@ -418,6 +531,7 @@ function App() {
           </p>
 
           <div className="ai-features">
+
             <div>
               <strong>01</strong>
               <span>AI Customer Support</span>
@@ -432,6 +546,7 @@ function App() {
               <strong>03</strong>
               <span>Smart Business Analytics</span>
             </div>
+
           </div>
         </div>
 
@@ -631,6 +746,7 @@ function App() {
               placeholder="Enter name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={saving}
             />
 
             <textarea
@@ -638,6 +754,7 @@ function App() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows="4"
+              disabled={saving}
             />
 
             <button
@@ -708,6 +825,7 @@ function App() {
                       onChange={(e) =>
                         setEditName(e.target.value)
                       }
+                      disabled={updatingId === test._id}
                     />
 
                     <textarea
@@ -716,6 +834,7 @@ function App() {
                         setEditMessage(e.target.value)
                       }
                       rows="4"
+                      disabled={updatingId === test._id}
                     />
 
                     <div
@@ -733,19 +852,26 @@ function App() {
                         onClick={() =>
                           updateData(test._id)
                         }
+                        disabled={updatingId === test._id}
                       >
-                        Save Changes
+                        {updatingId === test._id
+                          ? "Updating..."
+                          : "Save Changes"}
                       </button>
 
                       <button
                         type="button"
                         onClick={cancelEdit}
+                        disabled={updatingId === test._id}
                         style={{
                           padding: "12px 20px",
                           borderRadius: "8px",
                           border: "1px solid #ccc",
                           background: "transparent",
-                          cursor: "pointer",
+                          cursor:
+                            updatingId === test._id
+                              ? "not-allowed"
+                              : "pointer",
                         }}
                       >
                         Cancel
@@ -757,7 +883,6 @@ function App() {
                 ) : (
 
                   <>
-
                     <span>
                       DATABASE RECORD
                     </span>
@@ -788,6 +913,10 @@ function App() {
                         onClick={() =>
                           startEdit(test)
                         }
+                        disabled={
+                          deletingId === test._id ||
+                          refreshing
+                        }
                         style={{
                           padding: "10px 18px",
                           borderRadius: "8px",
@@ -803,19 +932,25 @@ function App() {
                         onClick={() =>
                           deleteData(test._id)
                         }
+                        disabled={deletingId === test._id}
                         style={{
                           padding: "10px 18px",
                           borderRadius: "8px",
                           border: "none",
-                          cursor: "pointer",
+                          cursor:
+                            deletingId === test._id
+                              ? "not-allowed"
+                              : "pointer",
                         }}
                       >
-                        Delete
+                        {deletingId === test._id
+                          ? "Deleting..."
+                          : "Delete"}
                       </button>
 
                     </div>
-
                   </>
+
                 )}
 
               </div>
@@ -835,23 +970,260 @@ function App() {
 
           <button
             type="button"
-            onClick={loadData}
-            disabled={loading}
+            onClick={handleRefresh}
+            disabled={loading || refreshing}
             style={{
               padding: "12px 24px",
               borderRadius: "8px",
               border: "1px solid #ccc",
               background: "transparent",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1,
+              cursor:
+                loading || refreshing
+                  ? "not-allowed"
+                  : "pointer",
+              opacity:
+                loading || refreshing
+                  ? 0.6
+                  : 1,
             }}
           >
-            {loading
-              ? "Loading..."
+            {refreshing
+              ? "Refreshing..."
               : "🔄 Refresh Database"}
           </button>
 
         </div>
+                {/* =========================
+            CUSTOMER LEADS
+        ========================= */}
+
+        <div className="section-heading" style={{ marginTop: "80px" }}>
+          <div
+  style={{
+    textAlign: "center",
+    marginBottom: "25px",
+  }}
+>
+  <h3 style={{ marginBottom: "5px" }}>
+    Total Leads: {leads.length}
+  </h3>
+
+  <p style={{ margin: 0, opacity: 0.7 }}>
+    Customer enquiries received
+  </p>
+</div>
+
+          <span>CUSTOMER ENQUIRIES</span>
+
+          <h2>
+            AryanX Digital
+            <br />
+            <em>Business Leads.</em>
+          </h2>
+
+          <p>
+            All enquiries submitted through the Free Digital Audit
+            form are stored securely in MongoDB.
+          </p>
+
+        </div>
+{/* LEAD SEARCH */}
+<div
+  style={{
+    maxWidth: "600px",
+    margin: "0 auto 30px",
+  }}
+>
+  <input
+    type="text"
+    placeholder="🔍 Search business, name, phone or email..."
+    value={leadSearch}
+    onChange={(e) => setLeadSearch(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "14px 18px",
+      borderRadius: "10px",
+      border: "1px solid #ccc",
+      fontSize: "15px",
+      boxSizing: "border-box",
+      outline: "none",
+    }}
+  />
+</div>
+        {leadsLoading ? (
+
+          <p className="backend-loading">
+            Loading customer enquiries...
+          </p>
+
+        ) : leads.filter((lead) => {
+    const search = leadSearch.toLowerCase().trim();
+
+    return (
+      lead.business?.toLowerCase().includes(search) ||
+      lead.name?.toLowerCase().includes(search) ||
+      lead.phone?.toLowerCase().includes(search) ||
+      lead.email?.toLowerCase().includes(search) ||
+      lead.type?.toLowerCase().includes(search)
+    );
+  }).length === 0 ? (
+  <p className="backend-loading">
+    No matching customer enquiry found.
+  </p>
+) : (
+
+          <div className="backend-data-grid">
+
+            {leads
+  .filter((lead) => {
+    const search = leadSearch.toLowerCase();
+
+    return (
+      lead.business?.toLowerCase().includes(search) ||
+      lead.name?.toLowerCase().includes(search) ||
+      lead.phone?.toLowerCase().includes(search) ||
+      lead.email?.toLowerCase().includes(search) ||
+      lead.type?.toLowerCase().includes(search)
+    );
+  })
+  .map((lead) => (
+
+              <div
+                className="backend-card"
+                key={lead._id}
+              >
+
+                <span>
+                  CUSTOMER ENQUIRY
+                </span>
+
+                <h3>
+                  {lead.business}
+                </h3>
+
+                <p>
+                  <strong>Customer:</strong>{" "}
+                  {lead.name}
+                </p>
+
+                <p>
+                  <strong>Phone:</strong>{" "}
+                  {lead.phone}
+                </p>
+
+                <p>
+                  <strong>Email:</strong>{" "}
+                  {lead.email}
+                </p>
+
+                <p>
+                  <strong>Business Type:</strong>{" "}
+                  {lead.type}
+                </p>
+
+                <small>
+                  Created At:{" "}
+                  {lead.createdAt
+                    ? new Date(
+                        lead.createdAt
+                      ).toLocaleString()
+                    : "N/A"}
+                </small>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    marginTop: "18px",
+                    flexWrap: "wrap",
+                  }}
+                >
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.open(
+                        `https://wa.me/91${lead.phone.replace(
+                          /\D/g,
+                          ""
+                        )}`,
+                        "_blank"
+                      )
+                    }
+                    style={{
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    💬 WhatsApp
+                    <button
+  type="button"
+  onClick={async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this lead?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setDeletingLeadId(lead._id);
+
+      const response = await fetch(
+        API(`/api/leads/${lead._id}`),
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.message || "Failed to delete lead");
+        return;
+      }
+
+      setLeads((prevLeads) =>
+        prevLeads.filter(
+          (item) => item._id !== lead._id
+        )
+      );
+
+      alert("Lead deleted successfully! ✅");
+    } catch (error) {
+      console.error("Delete Lead Error:", error);
+      alert("Server error. Please try again.");
+    } finally {
+      setDeletingLeadId(null);
+    }
+  }}
+  disabled={deletingLeadId === lead._id}
+  style={{
+    padding: "10px 18px",
+    borderRadius: "8px",
+    border: "none",
+    cursor:
+      deletingLeadId === lead._id
+        ? "not-allowed"
+        : "pointer",
+  }}
+>
+  {deletingLeadId === lead._id
+    ? "Deleting..."
+    : "🗑️ Delete"}
+</button>
+                  </button>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
 
       </section>
 
@@ -887,29 +1259,62 @@ function App() {
 
         <form
           className="audit-form"
-          onSubmit={(e) => {
-            e.preventDefault();
+          onSubmit={async (e) => {
+  e.preventDefault();
 
-            const business = e.target.business.value;
-            const customerName = e.target.name.value;
-            const phone = e.target.phone.value;
-            const email = e.target.email.value;
-            const type = e.target.type.value;
+  const business = e.target.business.value;
+  const customerName = e.target.name.value;
+  const phone = e.target.phone.value;
+  const email = e.target.email.value;
+  const type = e.target.type.value;
 
-            const whatsappMessage =
-              `Hello AryanX Digital,%0A%0A` +
-              `I want a Free Digital Audit.%0A%0A` +
-              `Business Name: ${business}%0A` +
-              `Name: ${customerName}%0A` +
-              `Phone: ${phone}%0A` +
-              `Email: ${email}%0A` +
-              `Business Type: ${type}`;
+  try {
+    // Save lead to MongoDB
+    const response = await fetch(API("/api/leads"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        business,
+        name: customerName,
+        phone,
+        email,
+        type
+      })
+    });
 
-            window.open(
-              `https://wa.me/917070858521?text=${whatsappMessage}`,
-              "_blank"
-            );
-          }}
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.message || "Failed to submit enquiry");
+      return;
+    }
+
+    // Open WhatsApp after successful database save
+    const whatsappMessage =
+      `Hello AryanX Digital,%0A%0A` +
+      `I want a Free Digital Audit.%0A%0A` +
+      `Business Name: ${business}%0A` +
+      `Name: ${customerName}%0A` +
+      `Phone: ${phone}%0A` +
+      `Email: ${email}%0A` +
+      `Business Type: ${type}`;
+
+    window.open(
+      `https://wa.me/917070858521?text=${whatsappMessage}`,
+      "_blank"
+    );
+
+    // Clear form
+    e.target.reset();
+
+    alert("Enquiry submitted successfully! ✅");
+  } catch (error) {
+    console.error("Lead submission error:", error);
+    alert("Server error. Please try again.");
+  }
+}}
         >
 
           <input
@@ -944,7 +1349,6 @@ function App() {
             name="type"
             required
           >
-
             <option value="">
               Select Business Type
             </option>
@@ -980,7 +1384,6 @@ function App() {
             <option value="Other">
               Other
             </option>
-
           </select>
 
           <button
@@ -991,6 +1394,7 @@ function App() {
           </button>
 
         </form>
+
       </section>
 
       {/* =========================

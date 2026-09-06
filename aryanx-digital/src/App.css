@@ -1111,3 +1111,321 @@ footer > p {
   }
 
 }
+/* =========================================
+   ARYANX DIGITAL - DATABASE UI POLISH
+========================================= */
+
+.backend-form {
+  background: #0f172a;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.backend-form h3 {
+  color: #ffffff;
+}
+
+.backend-form input,
+.backend-form textarea {
+  background: #080d1d;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.backend-form input::placeholder,
+.backend-form textarea::placeholder {
+  color: #64748b;
+}
+
+.backend-form input:focus,
+.backend-form textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.backend-card {
+  background: linear-gradient(
+    145deg,
+    #0f172a,
+    #080d1d
+  );
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+
+.backend-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 25px 60px rgba(37, 99, 235, 0.12);
+}
+
+.backend-card > span {
+  color: #60a5fa;
+}
+
+.backend-card h3 {
+  color: #ffffff;
+}
+
+.backend-card p {
+  color: #94a3b8;
+}
+
+.backend-card small {
+  background: #080d1d;
+  color: #64748b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.backend-card input,
+.backend-card textarea {
+  background: #080d1d;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.backend-card input:focus,
+.backend-card textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+.backend-loading {
+  color: #94a3b8;
+}
+
+/* Database buttons */
+
+.backend-card button {
+  font-family: inherit;
+  font-weight: 700;
+  transition: 0.25s ease;
+}
+
+.backend-card button:hover {
+  transform: translateY(-2px);
+}
+
+.backend-card button:first-of-type {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.backend-card button:last-of-type {
+  background: #1e293b;
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+/* Refresh button */
+
+.backend-section > div:last-child button {
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: #0f172a !important;
+}
+
+.backend-section > div:last-child button:hover {
+  border-color: #3b82f6 !important;
+  color: #60a5fa;
+}
+/* =========================================
+   ARYANX DIGITAL - TOAST NOTIFICATION
+========================================= */
+
+.toast {
+  position: fixed;
+  top: 100px;
+  right: 25px;
+  z-index: 9999;
+
+  min-width: 320px;
+  max-width: 420px;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 16px 18px;
+
+  background: rgba(15, 23, 42, 0.96);
+
+  border: 1px solid rgba(59, 130, 246, 0.35);
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(37, 99, 235, 0.12);
+
+  backdrop-filter: blur(18px);
+
+  animation: toastSlideIn 0.35s ease;
+}
+
+.toast-success {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.toast-error {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.toast-icon {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: rgba(59, 130, 246, 0.15);
+
+  color: #60a5fa;
+
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.toast-success .toast-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.toast-error .toast-icon {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.toast-content {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toast-content strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.toast-content span {
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.toast-close {
+  border: none;
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.toast-close:hover {
+  color: #ffffff;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .toast {
+    top: 90px;
+    left: 15px;
+    right: 15px;
+
+    min-width: 0;
+    width: auto;
+  }
+}
+/* =========================================
+   ARYANX DIGITAL - LOADING BUTTON STATES
+========================================= */
+
+.backend-card button:disabled,
+.backend-form button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.backend-card button:disabled:hover,
+.backend-form button:disabled:hover {
+  transform: none;
+}
+
+.backend-form .primary-btn:disabled {
+  background: #1e40af;
+  color: #cbd5e1;
+}
+
+.backend-card button {
+  min-width: 90px;
+}
+
+.backend-card button:disabled {
+  box-shadow: none;
+}
+
+/* Loading text */
+
+.backend-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Professional loading spinner */
+
+.backend-loading::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(148, 163, 184, 0.25);
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: backendSpin 0.8s linear infinite;
+}
+
+@keyframes backendSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Button loading feel */
+
+.backend-card button:disabled,
+.backend-form button:disabled {
+  transition: 0.2s ease;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .backend-card button {
+    min-width: 85px;
+  }
+}
