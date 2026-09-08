@@ -5,36 +5,42 @@ const leadSchema = new mongoose.Schema(
     business: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     phone: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     email: {
       type: String,
       required: true,
       trim: true,
-      lowercase: true
+      lowercase: true,
     },
 
     type: {
       type: String,
       required: true,
-      trim: true
-    }
+      trim: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["New", "Contacted", "Converted"],
+      default: "New",
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 

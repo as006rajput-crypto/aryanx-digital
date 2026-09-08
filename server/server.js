@@ -220,6 +220,102 @@ app.get("/api/leads", async (req, res) => {
     });
   }
 });
+// UPDATE LEAD STATUS
+
+app.put("/api/leads/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid lead ID"
+      });
+    }
+
+    if (!["New", "Contacted", "Converted"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status"
+      });
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedLead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Lead status updated successfully",
+      data: updatedLead
+    });
+  } catch (error) {
+    console.error("PUT /api/leads/:id/status error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update lead status",
+      error: error.message
+    });
+  }
+});
+app.put("/api/leads/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid lead ID"
+      });
+    }
+
+    if (!["New", "Contacted", "Converted"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status"
+      });
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedLead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Lead status updated successfully",
+      data: updatedLead
+    });
+  } catch (error) {
+    console.error("PUT /api/leads/:id/status error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update lead status",
+      error: error.message
+    });
+  }
+});
 // DELETE LEAD
 app.delete("/api/leads/:id", async (req, res) => {
   try {

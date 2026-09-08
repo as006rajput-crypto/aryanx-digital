@@ -54,8 +54,8 @@ a {
   position: relative;
 }
 .logo img {
-  width: 120px;
-  height: 50px;
+  width: 160px;
+  height: 65px;
   object-fit: contain;
   display: block;
 }
