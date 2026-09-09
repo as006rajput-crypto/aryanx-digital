@@ -1,6 +1,6 @@
-
 import { useEffect, useState } from "react";
 import "./App.css";
+import AdminLogin from "./AdminLogin";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -9,16 +9,18 @@ const API = (endpoint) => {
 };
 
 function App() {
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(
+    !!localStorage.getItem("adminToken")
+  );
+
   const [tests, setTests] = useState([]);
   const [leads, setLeads] = useState([]);
-
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const [leadSearch, setLeadSearch] = useState("");
   const [leadTypeFilter, setLeadTypeFilter] = useState("All");
-
   const [deletingLeadId, setDeletingLeadId] = useState(null);
 
   const [name, setName] = useState("");
@@ -106,16 +108,35 @@ function App() {
   // =========================
 
   const loadLeads = async () => {
+    const token = localStorage.getItem("adminToken");
+
+    if (!token) {
+      setLeads([]);
+      return;
+    }
+
     try {
       setLeadsLoading(true);
 
-      const response = await fetch(API("/api/leads"));
-
-      if (!response.ok) {
-        throw new Error("Failed to load leads");
-      }
+      const response = await fetch(API("/api/leads"), {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
 
       const result = await response.json();
+
+      if (response.status === 401) {
+        handleLogout();
+        showToast("Session expired. Please login again.", "error");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Failed to load leads"
+        );
+      }
 
       if (result.success) {
         setLeads(result.data);
@@ -385,13 +406,25 @@ function App() {
     id,
     status
   ) => {
+    const token =
+      localStorage.getItem("adminToken");
+
+    if (!token) {
+      handleLogout();
+      return;
+    }
+
     try {
+      setUpdatingId(id);
+
       const response = await fetch(
         API("/api/leads/" + id + "/status"),
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization:
+              "Bearer " + token,
           },
           body: JSON.stringify({
             status,
@@ -400,6 +433,15 @@ function App() {
       );
 
       const result = await response.json();
+
+      if (response.status === 401) {
+        handleLogout();
+        showToast(
+          "Session expired. Please login again.",
+          "error"
+        );
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -433,6 +475,8 @@ function App() {
         "Failed to update lead status.",
         "error"
       );
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -447,6 +491,14 @@ function App() {
 
     if (!confirmDelete) return;
 
+    const token =
+      localStorage.getItem("adminToken");
+
+    if (!token) {
+      handleLogout();
+      return;
+    }
+
     try {
       setDeletingLeadId(leadId);
 
@@ -454,10 +506,23 @@ function App() {
         API("/api/leads/" + leadId),
         {
           method: "DELETE",
+          headers: {
+            Authorization:
+              "Bearer " + token,
+          },
         }
       );
 
       const result = await response.json();
+
+      if (response.status === 401) {
+        handleLogout();
+        showToast(
+          "Session expired. Please login again.",
+          "error"
+        );
+        return;
+      }
 
       if (!response.ok) {
         showToast(
@@ -465,7 +530,6 @@ function App() {
             "Failed to delete lead.",
           "error"
         );
-
         return;
       }
 
@@ -495,12 +559,27 @@ function App() {
   };
 
   // =========================
+  // LOGOUT
+  // =========================
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminEmail");
+
+    setIsAdminLoggedIn(false);
+    setLeads([]);
+  };
+
+  // =========================
   // LOAD DATA ON PAGE LOAD
   // =========================
 
   useEffect(() => {
     loadData();
-    loadLeads();
+
+    if (localStorage.getItem("adminToken")) {
+      loadLeads();
+    }
   }, []);
 
   // =========================
@@ -549,6 +628,25 @@ function App() {
     setLeadSearch("");
     setLeadTypeFilter("All");
   };
+
+  // =========================
+  // ADMIN LOGIN
+  // =========================
+
+  if (!isAdminLoggedIn) {
+    return (
+      <AdminLogin
+        onLogin={() => {
+          setIsAdminLoggedIn(true);
+          loadLeads();
+        }}
+      />
+    );
+  }
+
+  // =========================
+  // MAIN APP
+  // =========================
 
   return (
     <div className="app">
@@ -599,6 +697,7 @@ function App() {
       ========================= */}
 
       <nav className="navbar">
+
         <div className="logo">
           <img
             src="/logo.jpg"
@@ -628,12 +727,35 @@ function App() {
           </a>
         </div>
 
-        <a
-          href="#contact"
-          className="nav-btn"
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+          }}
         >
-          Get Started
-        </a>
+          <a
+            href="#contact"
+            className="nav-btn"
+          >
+            Get Started
+          </a>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              padding: "10px 18px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: "600",
+            }}
+          >
+            🚪 Logout
+          </button>
+        </div>
+
       </nav>
 
       {/* =========================
@@ -641,6 +763,7 @@ function App() {
       ========================= */}
 
       <section className="hero">
+
         <div className="hero-content">
 
           <div className="badge">
@@ -663,6 +786,7 @@ function App() {
           </p>
 
           <div className="hero-buttons">
+
             <a
               href="#contact"
               className="primary-btn"
@@ -676,9 +800,11 @@ function App() {
             >
               Explore Services
             </a>
+
           </div>
 
           <div className="trust">
+
             <div>
               <strong>AI</strong>
               <span>Powered</span>
@@ -693,11 +819,13 @@ function App() {
               <strong>360°</strong>
               <span>Digital Growth</span>
             </div>
+
           </div>
 
         </div>
 
         <div className="hero-card">
+
           <div className="card-glow"></div>
 
           <div className="ai-orb">
@@ -713,6 +841,7 @@ function App() {
           </h3>
 
           <div className="mini-stats">
+
             <div>
               <span>Leads</span>
               <strong>+128%</strong>
@@ -722,8 +851,11 @@ function App() {
               <span>Automation</span>
               <strong>24/7</strong>
             </div>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =========================
@@ -734,13 +866,19 @@ function App() {
         className="section"
         id="services"
       >
+
         <div className="section-heading">
-          <span>OUR SERVICES</span>
+
+          <span>
+            OUR SERVICES
+          </span>
 
           <h2>
             Choose the right
             <br />
-            <em>growth system.</em>
+            <em>
+              growth system.
+            </em>
           </h2>
 
           <p>
@@ -748,11 +886,13 @@ function App() {
             to help your business build,
             automate and grow.
           </p>
+
         </div>
 
         <div className="services-grid">
 
           <div className="service-card">
+
             <div className="service-icon">
               ◈
             </div>
@@ -785,9 +925,11 @@ function App() {
             <a href="#contact">
               Get Started →
             </a>
+
           </div>
 
           <div className="service-card featured">
+
             <div className="popular">
               MOST POPULAR
             </div>
@@ -824,9 +966,11 @@ function App() {
             <a href="#contact">
               Grow With Us →
             </a>
+
           </div>
 
           <div className="service-card">
+
             <div className="service-icon">
               ◎
             </div>
@@ -859,9 +1003,11 @@ function App() {
             <a href="#contact">
               Build With AI →
             </a>
+
           </div>
 
         </div>
+
       </section>
 
       {/* =========================
@@ -872,6 +1018,7 @@ function App() {
         className="ai-section"
         id="ai"
       >
+
         <div className="ai-content">
 
           <span className="section-label">
@@ -893,7 +1040,6 @@ function App() {
 
             <div>
               <strong>01</strong>
-
               <span>
                 AI Customer Support
               </span>
@@ -901,7 +1047,6 @@ function App() {
 
             <div>
               <strong>02</strong>
-
               <span>
                 Automated Lead Follow-up
               </span>
@@ -909,23 +1054,27 @@ function App() {
 
             <div>
               <strong>03</strong>
-
               <span>
                 Smart Business Analytics
               </span>
             </div>
 
           </div>
+
         </div>
 
         <div className="ai-dashboard">
 
           <div className="dashboard-top">
-            <span>ARYANX AI</span>
+
+            <span>
+              ARYANX AI
+            </span>
 
             <span className="online">
               ● LIVE
             </span>
+
           </div>
 
           <div className="chat">
@@ -951,7 +1100,9 @@ function App() {
             </div>
 
           </div>
+
         </div>
+
       </section>
 
       {/* =========================
@@ -962,6 +1113,7 @@ function App() {
         className="about"
         id="about"
       >
+
         <div className="about-heading">
 
           <span className="section-label">
@@ -1020,7 +1172,9 @@ function App() {
             </div>
 
           </div>
+
         </div>
+
       </section>
 
       {/* =========================
@@ -1054,6 +1208,7 @@ function App() {
         <div className="why-grid">
 
           <div className="why-card">
+
             <div className="why-number">
               01
             </div>
@@ -1065,9 +1220,11 @@ function App() {
               to make business processes
               smarter and more efficient.
             </p>
+
           </div>
 
           <div className="why-card">
+
             <div className="why-number">
               02
             </div>
@@ -1079,9 +1236,11 @@ function App() {
               around your actual business
               goals and customer needs.
             </p>
+
           </div>
 
           <div className="why-card">
+
             <div className="why-number">
               03
             </div>
@@ -1093,9 +1252,11 @@ function App() {
               grow with your business, from
               the first customer to thousands.
             </p>
+
           </div>
 
           <div className="why-card">
+
             <div className="why-number">
               04
             </div>
@@ -1107,9 +1268,11 @@ function App() {
               delivery. We help businesses
               continuously improve and grow.
             </p>
+
           </div>
 
         </div>
+
       </section>
 
       {/* =========================
@@ -1184,6 +1347,7 @@ function App() {
             </button>
 
           </form>
+
         </div>
 
         {/* LIVE DATA */}
@@ -1231,6 +1395,7 @@ function App() {
               >
 
                 {editingId === test._id ? (
+
                   <>
                     <span>
                       EDIT DATABASE RECORD
@@ -1317,7 +1482,9 @@ function App() {
 
                     </div>
                   </>
+
                 ) : (
+
                   <>
                     <span>
                       DATABASE RECORD
@@ -1396,9 +1563,11 @@ function App() {
 
                     </div>
                   </>
+
                 )}
 
               </div>
+
             ))}
 
           </div>
@@ -1485,6 +1654,7 @@ function App() {
         >
 
           <div className="backend-card">
+
             <span>
               TOTAL LEADS
             </span>
@@ -1496,9 +1666,11 @@ function App() {
             <p>
               All customer enquiries
             </p>
+
           </div>
 
           <div className="backend-card">
+
             <span>
               NEW LEADS
             </span>
@@ -1510,9 +1682,11 @@ function App() {
             <p>
               Pending enquiries
             </p>
+
           </div>
 
           <div className="backend-card">
+
             <span>
               BUSINESS TYPES
             </span>
@@ -1524,6 +1698,7 @@ function App() {
             <p>
               Different business categories
             </p>
+
           </div>
 
         </div>
@@ -1541,6 +1716,7 @@ function App() {
         >
 
           <div className="backend-card">
+
             <span>
               CONTACTED LEADS
             </span>
@@ -1552,9 +1728,11 @@ function App() {
             <p>
               Leads already contacted
             </p>
+
           </div>
 
           <div className="backend-card">
+
             <span>
               CONVERTED LEADS
             </span>
@@ -1566,6 +1744,7 @@ function App() {
             <p>
               Successfully converted leads
             </p>
+
           </div>
 
         </div>
@@ -1660,15 +1839,20 @@ function App() {
         {/* CUSTOMER LEADS DATA */}
 
         {leadsLoading ? (
+
           <p className="backend-loading">
             Loading customer enquiries...
           </p>
+
         ) : filteredLeads.length === 0 ? (
+
           <p className="backend-loading">
             No matching customer enquiry
             found.
           </p>
+
         ) : (
+
           <div className="backend-data-grid">
 
             {filteredLeads.map((lead) => (
@@ -1736,6 +1920,10 @@ function App() {
                         e.target.value
                       )
                     }
+                    disabled={
+                      updatingId ===
+                      lead._id
+                    }
                     style={{
                       width: "100%",
                       padding: "10px 12px",
@@ -1744,7 +1932,11 @@ function App() {
                       border:
                         "1px solid #ccc",
                       fontSize: "14px",
-                      cursor: "pointer",
+                      cursor:
+                        updatingId ===
+                        lead._id
+                          ? "not-allowed"
+                          : "pointer",
                       outline: "none",
                     }}
                   >
@@ -1848,9 +2040,11 @@ function App() {
                 </div>
 
               </div>
+
             ))}
 
           </div>
+
         )}
 
       </section>
@@ -1957,12 +2151,15 @@ function App() {
                 return;
               }
 
-              // Update leads immediately
+              // Only update dashboard
+              // if admin is logged in
 
-              setLeads((prev) => [
-                result.data,
-                ...prev,
-              ]);
+              if (isAdminLoggedIn) {
+                setLeads((prev) => [
+                  result.data,
+                  ...prev,
+                ]);
+              }
 
               // Open WhatsApp
 
@@ -2107,7 +2304,6 @@ function App() {
         <div className="footer-logo">
           ARYAN
           <span>X</span>
-
           <small>
             DIGITAL
           </small>
