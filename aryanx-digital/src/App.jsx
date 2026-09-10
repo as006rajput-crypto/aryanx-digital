@@ -9,32 +9,64 @@ const API = (endpoint) => {
 };
 
 function App() {
+  // =========================
+  // ADMIN AUTH
+  // =========================
+
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(
     !!localStorage.getItem("adminToken")
   );
 
+  // =========================
+  // DATABASE TEST DATA
+  // =========================
+
   const [tests, setTests] = useState([]);
-  const [leads, setLeads] = useState([]);
-  const [leadsLoading, setLeadsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  const [leadSearch, setLeadSearch] = useState("");
-  const [leadTypeFilter, setLeadTypeFilter] = useState("All");
-  const [deletingLeadId, setDeletingLeadId] = useState(null);
 
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [updatingId, setUpdatingId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
-
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editMessage, setEditMessage] = useState("");
+  const [updatingId, setUpdatingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  // =========================
+  // LEADS
+  // =========================
+
+  const [leads, setLeads] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadSearch, setLeadSearch] = useState("");
+  const [leadTypeFilter, setLeadTypeFilter] = useState("All");
+  const [deletingLeadId, setDeletingLeadId] = useState(null);
+
+  // =========================
+  // TOAST
+  // =========================
 
   const [toast, setToast] = useState(null);
+
+  // =========================
+  // DAY 7 - AI CHATBOT
+  // =========================
+
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+
+  const [chatMessages, setChatMessages] = useState([
+    {
+      sender: "ai",
+      text:
+        "Hello! 👋 I'm AryanX AI. Tell me about your business and I'll help you find the right digital solution.",
+    },
+  ]);
+
+  const [chatLoading, setChatLoading] = useState(false);
 
   // =========================
   // DASHBOARD STATISTICS
@@ -55,8 +87,22 @@ function App() {
   ).length;
 
   const businessTypes = new Set(
-    leads.map((lead) => lead.type)
+    leads
+      .map((lead) => lead.type)
+      .filter(Boolean)
   ).size;
+
+  // Conversion rate
+  const conversionRate =
+    totalLeads > 0
+      ? Math.round((convertedLeads / totalLeads) * 100)
+      : 0;
+
+  // Contact rate
+  const contactRate =
+    totalLeads > 0
+      ? Math.round((contactedLeads / totalLeads) * 100)
+      : 0;
 
   // =========================
   // TOAST
@@ -74,7 +120,152 @@ function App() {
   };
 
   // =========================
-  // GET ALL TEST DATA
+  // DAY 7 - AI CHAT
+  // =========================
+
+  const sendAIMessage = async (e) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    const trimmedMessage = chatMessage.trim();
+
+    if (!trimmedMessage || chatLoading) {
+      return;
+    }
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        sender: "user",
+        text: trimmedMessage,
+      },
+    ]);
+
+    setChatMessage("");
+    setChatLoading(true);
+
+    try {
+      const response = await fetch(API("/api/ai/chat"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: trimmedMessage,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "AI assistant request failed"
+        );
+      }
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: result.reply,
+        },
+      ]);
+    } catch (error) {
+      console.error("AI Chat Error:", error);
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text:
+            "Sorry! I'm having trouble connecting right now. Please try again.",
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  // =========================
+  // CLEAR AI CHAT
+  // =========================
+
+  const clearAIChat = () => {
+    setChatMessages([
+      {
+        sender: "ai",
+        text:
+          "Hello! 👋 I'm AryanX AI. How can I help your business grow today?",
+      },
+    ]);
+
+    setChatMessage("");
+  };
+
+  // =========================
+  // AI FEATURE ACTIONS
+  // =========================
+
+  const handleAIFeatureClick = (feature) => {
+    if (feature === "support") {
+      setIsChatOpen(true);
+
+      showToast(
+        "AryanX AI Customer Support opened.",
+        "success"
+      );
+
+      setTimeout(() => {
+        const chatWindow =
+          document.getElementById("ai-chat-window");
+
+        if (chatWindow) {
+          chatWindow.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, 100);
+    }
+
+    if (feature === "followup") {
+      const followupSection =
+        document.getElementById("followup");
+
+      if (followupSection) {
+        followupSection.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      showToast(
+        "Lead Follow-up system opened.",
+        "success"
+      );
+    }
+
+    if (feature === "analytics") {
+      const analyticsSection =
+        document.getElementById("analytics");
+
+      if (analyticsSection) {
+        analyticsSection.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      showToast(
+        "Smart Business Analytics opened.",
+        "success"
+      );
+    }
+  };
+
+  // =========================
+  // LOAD TEST DATA
   // =========================
 
   const loadData = async () => {
@@ -97,14 +288,18 @@ function App() {
     } catch (error) {
       console.error("API Error:", error);
       setTests([]);
-      showToast("Unable to connect to server.", "error");
+
+      showToast(
+        "Unable to connect to server.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   // =========================
-  // GET ALL LEADS
+  // LOAD ALL LEADS
   // =========================
 
   const loadLeads = async () => {
@@ -128,7 +323,12 @@ function App() {
 
       if (response.status === 401) {
         handleLogout();
-        showToast("Session expired. Please login again.", "error");
+
+        showToast(
+          "Session expired. Please login again.",
+          "error"
+        );
+
         return;
       }
 
@@ -145,8 +345,13 @@ function App() {
       }
     } catch (error) {
       console.error("Leads API Error:", error);
+
       setLeads([]);
-      showToast("Unable to load leads.", "error");
+
+      showToast(
+        "Unable to load leads.",
+        "error"
+      );
     } finally {
       setLeadsLoading(false);
     }
@@ -193,6 +398,7 @@ function App() {
         "Please fill all fields.",
         "error"
       );
+
       return;
     }
 
@@ -259,7 +465,9 @@ function App() {
       "Are you sure you want to delete this record?"
     );
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      return;
+    }
 
     setDeletingId(id);
 
@@ -339,6 +547,7 @@ function App() {
         "Please fill all fields.",
         "error"
       );
+
       return;
     }
 
@@ -436,10 +645,12 @@ function App() {
 
       if (response.status === 401) {
         handleLogout();
+
         showToast(
           "Session expired. Please login again.",
           "error"
         );
+
         return;
       }
 
@@ -489,7 +700,9 @@ function App() {
       "Are you sure you want to delete this lead?"
     );
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      return;
+    }
 
     const token =
       localStorage.getItem("adminToken");
@@ -517,10 +730,12 @@ function App() {
 
       if (response.status === 401) {
         handleLogout();
+
         showToast(
           "Session expired. Please login again.",
           "error"
         );
+
         return;
       }
 
@@ -530,6 +745,7 @@ function App() {
             "Failed to delete lead.",
           "error"
         );
+
         return;
       }
 
@@ -556,6 +772,64 @@ function App() {
     } finally {
       setDeletingLeadId(null);
     }
+  };
+
+  // =========================
+  // AUTOMATED LEAD FOLLOW-UP
+  // =========================
+
+  const sendLeadFollowUp = (lead) => {
+    if (!lead.phone) {
+      showToast(
+        "Customer phone number is not available.",
+        "error"
+      );
+
+      return;
+    }
+
+    const cleanPhone = String(
+      lead.phone
+    ).replace(/\D/g, "");
+
+    const whatsappNumber =
+      cleanPhone.length === 10
+        ? "91" + cleanPhone
+        : cleanPhone;
+
+    const followUpMessage =
+      `Hello ${lead.name || "there"},\n\n` +
+      `This is AryanX Digital. 👋\n\n` +
+      `We received your enquiry for ${lead.business || "your business"} ` +
+      `and wanted to follow up regarding your Free Digital Audit.\n\n` +
+      `Please let us know a convenient time to discuss your requirements.\n\n` +
+      `Thank you,\nAryanX Digital`;
+
+    window.open(
+      "https://wa.me/" +
+        whatsappNumber +
+        "?text=" +
+        encodeURIComponent(
+          followUpMessage
+        ),
+      "_blank"
+    );
+
+    // Automatically move lead to Contacted
+    if (
+      lead.status === "New" ||
+      !lead.status
+    ) {
+      updateLeadStatus(
+        lead._id,
+        "Contacted"
+      );
+    }
+
+    showToast(
+      "Follow-up WhatsApp message prepared.",
+      "success"
+    );
   };
 
   // =========================
@@ -588,9 +862,10 @@ function App() {
 
   const filteredLeads = leads.filter(
     (lead) => {
-      const search = leadSearch
-        .toLowerCase()
-        .trim();
+      const search =
+        leadSearch
+          .toLowerCase()
+          .trim();
 
       const matchesSearch =
         lead.business
@@ -755,7 +1030,6 @@ function App() {
             🚪 Logout
           </button>
         </div>
-
       </nav>
 
       {/* =========================
@@ -821,7 +1095,6 @@ function App() {
             </div>
 
           </div>
-
         </div>
 
         <div className="hero-card">
@@ -853,9 +1126,7 @@ function App() {
             </div>
 
           </div>
-
         </div>
-
       </section>
 
       {/* =========================
@@ -1007,7 +1278,6 @@ function App() {
           </div>
 
         </div>
-
       </section>
 
       {/* =========================
@@ -1028,7 +1298,9 @@ function App() {
           <h2>
             Make Your Business
             <br />
-            <span>AI-Powered.</span>
+            <span>
+              AI-Powered.
+            </span>
           </h2>
 
           <p>
@@ -1038,35 +1310,119 @@ function App() {
 
           <div className="ai-features">
 
-            <div>
+            {/* 01 AI CUSTOMER SUPPORT */}
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                handleAIFeatureClick(
+                  "support"
+                )
+              }
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === " "
+                ) {
+                  handleAIFeatureClick(
+                    "support"
+                  );
+                }
+              }}
+              style={{
+                cursor: "pointer",
+              }}
+            >
               <strong>01</strong>
+
               <span>
                 AI Customer Support
               </span>
+
+              <small>
+                Click to open AI Assistant →
+              </small>
             </div>
 
-            <div>
+            {/* 02 LEAD FOLLOW-UP */}
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                handleAIFeatureClick(
+                  "followup"
+                )
+              }
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === " "
+                ) {
+                  handleAIFeatureClick(
+                    "followup"
+                  );
+                }
+              }}
+              style={{
+                cursor: "pointer",
+              }}
+            >
               <strong>02</strong>
+
               <span>
                 Automated Lead Follow-up
               </span>
+
+              <small>
+                Click to manage follow-ups →
+              </small>
             </div>
 
-            <div>
+            {/* 03 ANALYTICS */}
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                handleAIFeatureClick(
+                  "analytics"
+                )
+              }
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === " "
+                ) {
+                  handleAIFeatureClick(
+                    "analytics"
+                  );
+                }
+              }}
+              style={{
+                cursor: "pointer",
+              }}
+            >
               <strong>03</strong>
+
               <span>
                 Smart Business Analytics
               </span>
+
+              <small>
+                Click to view analytics →
+              </small>
             </div>
 
           </div>
-
         </div>
+
+        {/* STATIC AI PREVIEW */}
 
         <div className="ai-dashboard">
 
           <div className="dashboard-top">
-
             <span>
               ARYANX AI
             </span>
@@ -1074,7 +1430,6 @@ function App() {
             <span className="online">
               ● LIVE
             </span>
-
           </div>
 
           <div className="chat">
@@ -1102,7 +1457,6 @@ function App() {
           </div>
 
         </div>
-
       </section>
 
       {/* =========================
@@ -1174,7 +1528,6 @@ function App() {
           </div>
 
         </div>
-
       </section>
 
       {/* =========================
@@ -1272,7 +1625,6 @@ function App() {
           </div>
 
         </div>
-
       </section>
 
       {/* =========================
@@ -1321,7 +1673,9 @@ function App() {
               placeholder="Enter name"
               value={name}
               onChange={(e) =>
-                setName(e.target.value)
+                setName(
+                  e.target.value
+                )
               }
               disabled={saving}
             />
@@ -1330,7 +1684,9 @@ function App() {
               placeholder="Enter message"
               value={message}
               onChange={(e) =>
-                setMessage(e.target.value)
+                setMessage(
+                  e.target.value
+                )
               }
               rows="4"
               disabled={saving}
@@ -1347,10 +1703,9 @@ function App() {
             </button>
 
           </form>
-
         </div>
 
-        {/* LIVE DATA */}
+        {/* LIVE BACKEND DATA */}
 
         <div className="section-heading">
 
@@ -1395,7 +1750,6 @@ function App() {
               >
 
                 {editingId === test._id ? (
-
                   <>
                     <span>
                       EDIT DATABASE RECORD
@@ -1482,9 +1836,7 @@ function App() {
 
                     </div>
                   </>
-
                 ) : (
-
                   <>
                     <span>
                       DATABASE RECORD
@@ -1563,7 +1915,6 @@ function App() {
 
                     </div>
                   </>
-
                 )}
 
               </div>
@@ -1573,7 +1924,7 @@ function App() {
           </div>
         )}
 
-        {/* REFRESH BUTTON */}
+        {/* REFRESH */}
 
         <div
           style={{
@@ -1616,6 +1967,7 @@ function App() {
 
         <div
           className="section-heading"
+          id="followup"
           style={{
             marginTop: "80px",
           }}
@@ -1641,120 +1993,211 @@ function App() {
 
         </div>
 
-        {/* DASHBOARD STATISTICS */}
+        {/* =========================
+            SMART BUSINESS ANALYTICS
+        ========================= */}
 
         <div
+          id="analytics"
           style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(3, 1fr)",
-            gap: "20px",
-            margin: "40px 0",
+            scrollMarginTop: "100px",
           }}
         >
 
-          <div className="backend-card">
+          <div
+            className="section-heading"
+            style={{
+              marginTop: "50px",
+            }}
+          >
 
             <span>
-              TOTAL LEADS
+              SMART BUSINESS ANALYTICS
             </span>
 
             <h2>
-              {totalLeads}
+              Understand Your
+              <br />
+              <em>
+                Business Growth.
+              </em>
             </h2>
 
             <p>
-              All customer enquiries
+              Track customer enquiries,
+              lead activity, conversion and
+              business categories from one
+              dashboard.
             </p>
 
           </div>
 
-          <div className="backend-card">
+          {/* MAIN ANALYTICS */}
 
-            <span>
-              NEW LEADS
-            </span>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(3, 1fr)",
+              gap: "20px",
+              margin: "40px 0",
+            }}
+          >
 
-            <h2>
-              {newLeads}
-            </h2>
+            <div className="backend-card">
+              <span>
+                TOTAL LEADS
+              </span>
 
-            <p>
-              Pending enquiries
-            </p>
+              <h2>
+                {totalLeads}
+              </h2>
+
+              <p>
+                All customer enquiries
+              </p>
+            </div>
+
+            <div className="backend-card">
+              <span>
+                NEW LEADS
+              </span>
+
+              <h2>
+                {newLeads}
+              </h2>
+
+              <p>
+                Pending enquiries
+              </p>
+            </div>
+
+            <div className="backend-card">
+              <span>
+                BUSINESS TYPES
+              </span>
+
+              <h2>
+                {businessTypes}
+              </h2>
+
+              <p>
+                Different business categories
+              </p>
+            </div>
 
           </div>
 
-          <div className="backend-card">
+          {/* STATUS ANALYTICS */}
 
-            <span>
-              BUSINESS TYPES
-            </span>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(3, 1fr)",
+              gap: "20px",
+              margin:
+                "20px 0 40px",
+            }}
+          >
 
-            <h2>
-              {businessTypes}
-            </h2>
+            <div className="backend-card">
+              <span>
+                CONTACTED LEADS
+              </span>
 
-            <p>
-              Different business categories
-            </p>
+              <h2>
+                {contactedLeads}
+              </h2>
+
+              <p>
+                Leads already contacted
+              </p>
+            </div>
+
+            <div className="backend-card">
+              <span>
+                CONVERTED LEADS
+              </span>
+
+              <h2>
+                {convertedLeads}
+              </h2>
+
+              <p>
+                Successfully converted leads
+              </p>
+            </div>
+
+            <div className="backend-card">
+              <span>
+                CONVERSION RATE
+              </span>
+
+              <h2>
+                {conversionRate}%
+              </h2>
+
+              <p>
+                Lead conversion performance
+              </p>
+            </div>
+
+          </div>
+
+          {/* EXTRA ANALYTICS */}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, 1fr)",
+              gap: "20px",
+              marginBottom: "50px",
+            }}
+          >
+
+            <div className="backend-card">
+              <span>
+                CONTACT RATE
+              </span>
+
+              <h2>
+                {contactRate}%
+              </h2>
+
+              <p>
+                Percentage of leads contacted
+              </p>
+            </div>
+
+            <div className="backend-card">
+              <span>
+                FOLLOW-UP READY
+              </span>
+
+              <h2>
+                {newLeads}
+              </h2>
+
+              <p>
+                New leads ready for follow-up
+              </p>
+            </div>
 
           </div>
 
         </div>
 
-        {/* STATUS STATISTICS */}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(2, 1fr)",
-            gap: "20px",
-            margin: "20px 0 40px",
-          }}
-        >
-
-          <div className="backend-card">
-
-            <span>
-              CONTACTED LEADS
-            </span>
-
-            <h2>
-              {contactedLeads}
-            </h2>
-
-            <p>
-              Leads already contacted
-            </p>
-
-          </div>
-
-          <div className="backend-card">
-
-            <span>
-              CONVERTED LEADS
-            </span>
-
-            <h2>
-              {convertedLeads}
-            </h2>
-
-            <p>
-              Successfully converted leads
-            </p>
-
-          </div>
-
-        </div>
-
-        {/* LEAD SEARCH & FILTER */}
+        {/* =========================
+            LEAD SEARCH & FILTER
+        ========================= */}
 
         <div
           style={{
             maxWidth: "600px",
-            margin: "0 auto 30px",
+            margin:
+              "0 auto 30px",
           }}
         >
 
@@ -1769,11 +2212,15 @@ function App() {
             }
             style={{
               width: "100%",
-              padding: "14px 18px",
-              borderRadius: "10px",
-              border: "1px solid #ccc",
+              padding:
+                "14px 18px",
+              borderRadius:
+                "10px",
+              border:
+                "1px solid #ccc",
               fontSize: "15px",
-              boxSizing: "border-box",
+              boxSizing:
+                "border-box",
               outline: "none",
             }}
           />
@@ -1787,9 +2234,12 @@ function App() {
             }
             style={{
               width: "100%",
-              padding: "14px 18px",
-              borderRadius: "10px",
-              border: "1px solid #ccc",
+              padding:
+                "14px 18px",
+              borderRadius:
+                "10px",
+              border:
+                "1px solid #ccc",
               fontSize: "15px",
               marginTop: "12px",
               outline: "none",
@@ -1802,9 +2252,12 @@ function App() {
 
             {[
               ...new Set(
-                leads.map(
-                  (lead) => lead.type
-                )
+                leads
+                  .map(
+                    (lead) =>
+                      lead.type
+                  )
+                  .filter(Boolean)
               ),
             ].map((type) => (
 
@@ -1824,10 +2277,13 @@ function App() {
             onClick={clearLeadFilters}
             style={{
               marginTop: "12px",
-              padding: "10px 18px",
-              borderRadius: "8px",
+              padding:
+                "10px 18px",
+              borderRadius:
+                "8px",
               border: "none",
-              cursor: "pointer",
+              cursor:
+                "pointer",
               fontSize: "14px",
             }}
           >
@@ -1836,23 +2292,20 @@ function App() {
 
         </div>
 
-        {/* CUSTOMER LEADS DATA */}
+        {/* =========================
+            CUSTOMER LEADS
+        ========================= */}
 
         {leadsLoading ? (
-
           <p className="backend-loading">
             Loading customer enquiries...
           </p>
-
         ) : filteredLeads.length === 0 ? (
-
           <p className="backend-loading">
             No matching customer enquiry
             found.
           </p>
-
         ) : (
-
           <div className="backend-data-grid">
 
             {filteredLeads.map((lead) => (
@@ -1912,7 +2365,8 @@ function App() {
 
                   <select
                     value={
-                      lead.status || "New"
+                      lead.status ||
+                      "New"
                     }
                     onChange={(e) =>
                       updateLeadStatus(
@@ -1926,9 +2380,12 @@ function App() {
                     }
                     style={{
                       width: "100%",
-                      padding: "10px 12px",
-                      marginTop: "8px",
-                      borderRadius: "8px",
+                      padding:
+                        "10px 12px",
+                      marginTop:
+                        "8px",
+                      borderRadius:
+                        "8px",
                       border:
                         "1px solid #ccc",
                       fontSize: "14px",
@@ -1937,7 +2394,8 @@ function App() {
                         lead._id
                           ? "not-allowed"
                           : "pointer",
-                      outline: "none",
+                      outline:
+                        "none",
                     }}
                   >
 
@@ -1966,29 +2424,77 @@ function App() {
                     : "N/A"}
                 </small>
 
+                {/* LEAD ACTIONS */}
+
                 <div
                   style={{
                     display: "flex",
                     gap: "10px",
-                    marginTop: "18px",
-                    flexWrap: "wrap",
+                    marginTop:
+                      "18px",
+                    flexWrap:
+                      "wrap",
                   }}
                 >
+
+                  {/* AUTOMATED FOLLOW-UP */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      sendLeadFollowUp(
+                        lead
+                      )
+                    }
+                    style={{
+                      padding:
+                        "10px 18px",
+                      borderRadius:
+                        "8px",
+                      border: "none",
+                      cursor:
+                        "pointer",
+                      fontWeight:
+                        "600",
+                    }}
+                  >
+                    📲 Follow-up
+                  </button>
 
                   {/* WHATSAPP */}
 
                   <button
                     type="button"
                     onClick={() => {
+
                       const cleanPhone =
-                        lead.phone.replace(
+                        String(
+                          lead.phone || ""
+                        ).replace(
                           /\D/g,
                           ""
                         );
 
+                      const whatsappNumber =
+                        cleanPhone.length ===
+                        10
+                          ? "91" +
+                            cleanPhone
+                          : cleanPhone;
+
+                      const message =
+                        "Hello " +
+                        (lead.name ||
+                          "there") +
+                        ", this is AryanX Digital. How can we help your business grow?";
+
                       window.open(
-                        "https://wa.me/91" +
-                          cleanPhone,
+                        "https://wa.me/" +
+                          whatsappNumber +
+                          "?text=" +
+                          encodeURIComponent(
+                            message
+                          ),
                         "_blank"
                       );
                     }}
@@ -2044,7 +2550,6 @@ function App() {
             ))}
 
           </div>
-
         )}
 
       </section>
@@ -2098,6 +2603,7 @@ function App() {
         <form
           className="audit-form"
           onSubmit={async (e) => {
+
             e.preventDefault();
 
             const business =
@@ -2117,8 +2623,6 @@ function App() {
 
             try {
 
-              // Save lead to MongoDB
-
               const response =
                 await fetch(
                   API("/api/leads"),
@@ -2128,13 +2632,15 @@ function App() {
                       "Content-Type":
                         "application/json",
                     },
-                    body: JSON.stringify({
-                      business,
-                      name: customerName,
-                      phone,
-                      email,
-                      type,
-                    }),
+                    body:
+                      JSON.stringify({
+                        business,
+                        name:
+                          customerName,
+                        phone,
+                        email,
+                        type,
+                      }),
                   }
                 );
 
@@ -2142,6 +2648,7 @@ function App() {
                 await response.json();
 
               if (!response.ok) {
+
                 showToast(
                   result.message ||
                     "Failed to submit enquiry",
@@ -2151,17 +2658,14 @@ function App() {
                 return;
               }
 
-              // Only update dashboard
-              // if admin is logged in
-
               if (isAdminLoggedIn) {
+
                 setLeads((prev) => [
                   result.data,
                   ...prev,
                 ]);
-              }
 
-              // Open WhatsApp
+              }
 
               const whatsappMessage =
                 "Hello AryanX Digital,\n\n" +
@@ -2189,8 +2693,6 @@ function App() {
                 "_blank"
               );
 
-              // Clear form
-
               e.target.reset();
 
               showToast(
@@ -2210,6 +2712,7 @@ function App() {
                 "error"
               );
             }
+
           }}
         >
 
@@ -2295,7 +2798,7 @@ function App() {
 
       </section>
 
-      {/* =========================
+            {/* =========================
           FOOTER
       ========================= */}
 
@@ -2353,6 +2856,258 @@ function App() {
         </a>
 
       </footer>
+
+      {/* =========================
+          FLOATING AI CHATBOT
+      ========================= */}
+
+      <button
+        type="button"
+        onClick={() =>
+          setIsChatOpen((prev) => !prev)
+        }
+        aria-label="Open AryanX AI Chat"
+        style={{
+          position: "fixed",
+          right: "25px",
+          bottom: "25px",
+          width: "60px",
+          height: "60px",
+          borderRadius: "50%",
+          border: "none",
+          background: "#2563eb",
+          color: "#ffffff",
+          fontSize: "26px",
+          fontWeight: "700",
+          cursor: "pointer",
+          zIndex: 999999,
+          boxShadow:
+            "0 10px 30px rgba(0,0,0,0.4)",
+        }}
+      >
+        {isChatOpen ? "×" : "✦"}
+      </button>
+
+      {isChatOpen && (
+        <div
+          id="ai-chat-window"
+          style={{
+            position: "fixed",
+            right: "25px",
+            bottom: "100px",
+            width: "360px",
+            maxWidth:
+              "calc(100vw - 40px)",
+            height: "500px",
+            background: "#080d1d",
+            border:
+              "1px solid #2563eb",
+            borderRadius: "18px",
+            padding: "18px",
+            zIndex: 999998,
+            boxShadow:
+              "0 20px 60px rgba(0,0,0,0.6)",
+            display: "flex",
+            flexDirection: "column",
+            boxSizing: "border-box",
+          }}
+        >
+
+          {/* CHAT HEADER */}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent:
+                "space-between",
+              alignItems: "center",
+              paddingBottom: "14px",
+              borderBottom:
+                "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+
+            <div>
+
+              <strong
+                style={{
+                  display: "block",
+                  color: "#ffffff",
+                  fontSize: "15px",
+                }}
+              >
+                ✦ ARYANX AI
+              </strong>
+
+              <span
+                style={{
+                  color: "#22c55e",
+                  fontSize: "11px",
+                }}
+              >
+                ● Online
+              </span>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={clearAIChat}
+              title="Clear chat"
+              style={{
+                border: "none",
+                background:
+                  "transparent",
+                color: "#94a3b8",
+                fontSize: "20px",
+                cursor: "pointer",
+              }}
+            >
+              ↻
+            </button>
+
+          </div>
+
+          {/* CHAT MESSAGES */}
+
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "15px 2px",
+            }}
+          >
+
+            {chatMessages.map(
+              (chat, index) => (
+                <div
+                  key={index}
+                  style={{
+                    maxWidth: "82%",
+                    marginBottom: "10px",
+                    marginLeft:
+                      chat.sender ===
+                      "user"
+                        ? "auto"
+                        : "0",
+                    padding:
+                      "11px 13px",
+                    borderRadius:
+                      "11px",
+                    background:
+                      chat.sender ===
+                      "user"
+                        ? "#1e293b"
+                        : "rgba(37,99,235,0.15)",
+                    color:
+                      chat.sender ===
+                      "user"
+                        ? "#e2e8f0"
+                        : "#bfdbfe",
+                    fontSize: "12px",
+                    lineHeight: "1.5",
+                    wordBreak:
+                      "break-word",
+                  }}
+                >
+                  {chat.text}
+                </div>
+              )
+            )}
+
+            {chatLoading && (
+              <div
+                style={{
+                  maxWidth: "82%",
+                  padding:
+                    "11px 13px",
+                  borderRadius:
+                    "11px",
+                  background:
+                    "rgba(37,99,235,0.15)",
+                  color: "#93c5fd",
+                  fontSize: "12px",
+                }}
+              >
+                AryanX AI is
+                thinking...
+              </div>
+            )}
+
+          </div>
+
+          {/* CHAT INPUT */}
+
+          <form
+            onSubmit={sendAIMessage}
+            style={{
+              display: "flex",
+              gap: "8px",
+              paddingTop: "12px",
+              borderTop:
+                "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+
+            <input
+              type="text"
+              placeholder="Ask AryanX AI..."
+              value={chatMessage}
+              onChange={(e) =>
+                setChatMessage(
+                  e.target.value
+                )
+              }
+              disabled={chatLoading}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: "12px",
+                borderRadius: "9px",
+                border:
+                  "1px solid rgba(255,255,255,0.15)",
+                background:
+                  "#0f172a",
+                color: "#ffffff",
+                outline: "none",
+                boxSizing:
+                  "border-box",
+              }}
+            />
+
+            <button
+              type="submit"
+              disabled={
+                chatLoading ||
+                !chatMessage.trim()
+              }
+              style={{
+                width: "45px",
+                border: "none",
+                borderRadius: "9px",
+                background:
+                  "#2563eb",
+                color: "#ffffff",
+                cursor:
+                  chatLoading ||
+                  !chatMessage.trim()
+                    ? "not-allowed"
+                    : "pointer",
+                opacity:
+                  chatLoading ||
+                  !chatMessage.trim()
+                    ? 0.5
+                    : 1,
+                fontSize: "16px",
+              }}
+            >
+              ➤
+            </button>
+
+          </form>
+
+        </div>
+      )}
 
     </div>
   );
