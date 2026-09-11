@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import "./App.css";
 import AdminLogin from "./AdminLogin";
@@ -52,7 +53,7 @@ function App() {
   const [toast, setToast] = useState(null);
 
   // =========================
-  // DAY 7 - AI CHATBOT
+  // DAY 7/8 - AI CHATBOT
   // =========================
 
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -86,19 +87,21 @@ function App() {
     (lead) => lead.status === "Converted"
   ).length;
 
+  const closedLeads = leads.filter(
+    (lead) => lead.status === "Closed"
+  ).length;
+
   const businessTypes = new Set(
     leads
       .map((lead) => lead.type)
       .filter(Boolean)
   ).size;
 
-  // Conversion rate
   const conversionRate =
     totalLeads > 0
       ? Math.round((convertedLeads / totalLeads) * 100)
       : 0;
 
-  // Contact rate
   const contactRate =
     totalLeads > 0
       ? Math.round((contactedLeads / totalLeads) * 100)
@@ -120,7 +123,7 @@ function App() {
   };
 
   // =========================
-  // DAY 7 - AI CHAT
+  // DAY 8 - AI CONVERSATION MEMORY
   // =========================
 
   const sendAIMessage = async (e) => {
@@ -134,6 +137,24 @@ function App() {
       return;
     }
 
+    /*
+      Create conversation history BEFORE adding
+      the new user message.
+
+      This allows the backend/AI to understand
+      what the user was talking about previously.
+    */
+    const conversationHistory = chatMessages
+      .filter((chat) => chat.text?.trim())
+      .map((chat) => ({
+        role:
+          chat.sender === "user"
+            ? "user"
+            : "model",
+        text: chat.text,
+      }));
+
+    // Add current user message to UI
     setChatMessages((prev) => [
       ...prev,
       {
@@ -146,21 +167,29 @@ function App() {
     setChatLoading(true);
 
     try {
-      const response = await fetch(API("/api/ai/chat"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: trimmedMessage,
-        }),
-      });
+      const response = await fetch(
+        API("/api/ai/chat"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: trimmedMessage,
+
+            // Send previous conversation
+            // to the backend for AI memory.
+            history: conversationHistory,
+          }),
+        }
+      );
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message || "AI assistant request failed"
+          result.message ||
+            "AI assistant request failed"
         );
       }
 
@@ -172,7 +201,10 @@ function App() {
         },
       ]);
     } catch (error) {
-      console.error("AI Chat Error:", error);
+      console.error(
+        "AI Chat Error:",
+        error
+      );
 
       setChatMessages((prev) => [
         ...prev,
@@ -218,7 +250,9 @@ function App() {
 
       setTimeout(() => {
         const chatWindow =
-          document.getElementById("ai-chat-window");
+          document.getElementById(
+            "ai-chat-window"
+          );
 
         if (chatWindow) {
           chatWindow.scrollIntoView({
@@ -272,7 +306,9 @@ function App() {
     try {
       setLoading(true);
 
-      const response = await fetch(API("/api/tests"));
+      const response = await fetch(
+        API("/api/tests")
+      );
 
       if (!response.ok) {
         throw new Error("Server error");
@@ -286,7 +322,11 @@ function App() {
         setTests([]);
       }
     } catch (error) {
-      console.error("API Error:", error);
+      console.error(
+        "API Error:",
+        error
+      );
+
       setTests([]);
 
       showToast(
@@ -303,7 +343,8 @@ function App() {
   // =========================
 
   const loadLeads = async () => {
-    const token = localStorage.getItem("adminToken");
+    const token =
+      localStorage.getItem("adminToken");
 
     if (!token) {
       setLeads([]);
@@ -313,13 +354,18 @@ function App() {
     try {
       setLeadsLoading(true);
 
-      const response = await fetch(API("/api/leads"), {
-        headers: {
-          Authorization: "Bearer " + token,
-        },
-      });
+      const response = await fetch(
+        API("/api/leads"),
+        {
+          headers: {
+            Authorization:
+              "Bearer " + token,
+          },
+        }
+      );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (response.status === 401) {
         handleLogout();
@@ -334,7 +380,8 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          result.message || "Failed to load leads"
+          result.message ||
+            "Failed to load leads"
         );
       }
 
@@ -344,7 +391,10 @@ function App() {
         setLeads([]);
       }
     } catch (error) {
-      console.error("Leads API Error:", error);
+      console.error(
+        "Leads API Error:",
+        error
+      );
 
       setLeads([]);
 
@@ -375,7 +425,10 @@ function App() {
         "success"
       );
     } catch (error) {
-      console.error("Refresh Error:", error);
+      console.error(
+        "Refresh Error:",
+        error
+      );
 
       showToast(
         "Unable to refresh data.",
@@ -393,7 +446,10 @@ function App() {
   const addData = async (e) => {
     e.preventDefault();
 
-    if (!name.trim() || !message.trim()) {
+    if (
+      !name.trim() ||
+      !message.trim()
+    ) {
       showToast(
         "Please fill all fields.",
         "error"
@@ -405,21 +461,24 @@ function App() {
     setSaving(true);
 
     try {
-      const response = await fetch(
-        API("/api/test"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            message,
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          API("/api/test"),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              name,
+              message,
+            }),
+          }
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result.success) {
         setTests((prev) => [
@@ -461,9 +520,10 @@ function App() {
   // =========================
 
   const deleteData = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this record?"
-    );
+    const confirmDelete =
+      window.confirm(
+        "Are you sure you want to delete this record?"
+      );
 
     if (!confirmDelete) {
       return;
@@ -472,19 +532,22 @@ function App() {
     setDeletingId(id);
 
     try {
-      const response = await fetch(
-        API("/api/test/" + id),
-        {
-          method: "DELETE",
-        }
-      );
+      const response =
+        await fetch(
+          API("/api/test/" + id),
+          {
+            method: "DELETE",
+          }
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result.success) {
         setTests((prev) =>
           prev.filter(
-            (test) => test._id !== id
+            (test) =>
+              test._id !== id
           )
         );
 
@@ -554,21 +617,24 @@ function App() {
     setUpdatingId(id);
 
     try {
-      const response = await fetch(
-        API("/api/test/" + id),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editName,
-            message: editMessage,
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          API("/api/test/" + id),
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              name: editName,
+              message: editMessage,
+            }),
+          }
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result.success) {
         setTests((prev) =>
@@ -616,7 +682,9 @@ function App() {
     status
   ) => {
     const token =
-      localStorage.getItem("adminToken");
+      localStorage.getItem(
+        "adminToken"
+      );
 
     if (!token) {
       handleLogout();
@@ -626,22 +694,29 @@ function App() {
     try {
       setUpdatingId(id);
 
-      const response = await fetch(
-        API("/api/leads/" + id + "/status"),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization:
-              "Bearer " + token,
-          },
-          body: JSON.stringify({
-            status,
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          API(
+            "/api/leads/" +
+              id +
+              "/status"
+          ),
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type":
+                "application/json",
+              Authorization:
+                "Bearer " + token,
+            },
+            body: JSON.stringify({
+              status,
+            }),
+          }
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (response.status === 401) {
         handleLogout();
@@ -666,7 +741,8 @@ function App() {
           lead._id === id
             ? {
                 ...lead,
-                status: result.data.status,
+                status:
+                  result.data.status,
               }
             : lead
         )
@@ -695,17 +771,22 @@ function App() {
   // DELETE LEAD
   // =========================
 
-  const deleteLead = async (leadId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this lead?"
-    );
+  const deleteLead = async (
+    leadId
+  ) => {
+    const confirmDelete =
+      window.confirm(
+        "Are you sure you want to delete this lead?"
+      );
 
     if (!confirmDelete) {
       return;
     }
 
     const token =
-      localStorage.getItem("adminToken");
+      localStorage.getItem(
+        "adminToken"
+      );
 
     if (!token) {
       handleLogout();
@@ -715,18 +796,23 @@ function App() {
     try {
       setDeletingLeadId(leadId);
 
-      const response = await fetch(
-        API("/api/leads/" + leadId),
-        {
-          method: "DELETE",
-          headers: {
-            Authorization:
-              "Bearer " + token,
-          },
-        }
-      );
+      const response =
+        await fetch(
+          API(
+            "/api/leads/" +
+              leadId
+          ),
+          {
+            method: "DELETE",
+            headers: {
+              Authorization:
+                "Bearer " + token,
+            },
+          }
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (response.status === 401) {
         handleLogout();
@@ -751,7 +837,8 @@ function App() {
 
       setLeads((prevLeads) =>
         prevLeads.filter(
-          (lead) => lead._id !== leadId
+          (lead) =>
+            lead._id !== leadId
         )
       );
 
@@ -778,7 +865,9 @@ function App() {
   // AUTOMATED LEAD FOLLOW-UP
   // =========================
 
-  const sendLeadFollowUp = (lead) => {
+  const sendLeadFollowUp = (
+    lead
+  ) => {
     if (!lead.phone) {
       showToast(
         "Customer phone number is not available.",
@@ -788,9 +877,11 @@ function App() {
       return;
     }
 
-    const cleanPhone = String(
-      lead.phone
-    ).replace(/\D/g, "");
+    const cleanPhone =
+      String(lead.phone).replace(
+        /\D/g,
+        ""
+      );
 
     const whatsappNumber =
       cleanPhone.length === 10
@@ -800,7 +891,10 @@ function App() {
     const followUpMessage =
       `Hello ${lead.name || "there"},\n\n` +
       `This is AryanX Digital. 👋\n\n` +
-      `We received your enquiry for ${lead.business || "your business"} ` +
+      `We received your enquiry for ${
+        lead.business ||
+        "your business"
+      } ` +
       `and wanted to follow up regarding your Free Digital Audit.\n\n` +
       `Please let us know a convenient time to discuss your requirements.\n\n` +
       `Thank you,\nAryanX Digital`;
@@ -815,7 +909,6 @@ function App() {
       "_blank"
     );
 
-    // Automatically move lead to Contacted
     if (
       lead.status === "New" ||
       !lead.status
@@ -837,8 +930,13 @@ function App() {
   // =========================
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminEmail");
+    localStorage.removeItem(
+      "adminToken"
+    );
+
+    localStorage.removeItem(
+      "adminEmail"
+    );
 
     setIsAdminLoggedIn(false);
     setLeads([]);
@@ -851,7 +949,11 @@ function App() {
   useEffect(() => {
     loadData();
 
-    if (localStorage.getItem("adminToken")) {
+    if (
+      localStorage.getItem(
+        "adminToken"
+      )
+    ) {
       loadLeads();
     }
   }, []);
@@ -860,8 +962,8 @@ function App() {
   // FILTERED LEADS
   // =========================
 
-  const filteredLeads = leads.filter(
-    (lead) => {
+  const filteredLeads =
+    leads.filter((lead) => {
       const search =
         leadSearch
           .toLowerCase()
@@ -886,14 +988,14 @@ function App() {
 
       const matchesType =
         leadTypeFilter === "All" ||
-        lead.type === leadTypeFilter;
+        lead.type ===
+          leadTypeFilter;
 
       return (
         matchesSearch &&
         matchesType
       );
-    }
-  );
+    });
 
   // =========================
   // CLEAR LEAD FILTERS
@@ -938,14 +1040,16 @@ function App() {
           }
         >
           <div className="toast-icon">
-            {toast.type === "success"
+            {toast.type ===
+            "success"
               ? "✓"
               : "!"}
           </div>
 
           <div className="toast-content">
             <strong>
-              {toast.type === "success"
+              {toast.type ===
+              "success"
                 ? "Success"
                 : "Error"}
             </strong>
@@ -1006,7 +1110,8 @@ function App() {
           style={{
             display: "flex",
             gap: "10px",
-            alignItems: "center",
+            alignItems:
+              "center",
           }}
         >
           <a
@@ -1018,13 +1123,19 @@ function App() {
 
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={
+              handleLogout
+            }
             style={{
-              padding: "10px 18px",
-              borderRadius: "8px",
+              padding:
+                "10px 18px",
+              borderRadius:
+                "8px",
               border: "none",
-              cursor: "pointer",
-              fontWeight: "600",
+              cursor:
+                "pointer",
+              fontWeight:
+                "600",
             }}
           >
             🚪 Logout
@@ -1041,21 +1152,25 @@ function App() {
         <div className="hero-content">
 
           <div className="badge">
-            ✦ AI-POWERED DIGITAL GROWTH
+            ✦ AI-POWERED DIGITAL
+            GROWTH
           </div>
 
           <h1>
             Grow Your Business
             <span>
-              {" "}With AI & Digital.
+              {" "}
+              With AI & Digital.
             </span>
           </h1>
 
           <p>
-            AryanX Digital helps businesses
-            build, automate and grow their
-            online presence with modern
-            technology, AI and smart digital
+            AryanX Digital helps
+            businesses build,
+            automate and grow
+            their online presence
+            with modern technology,
+            AI and smart digital
             solutions.
           </p>
 
@@ -1065,7 +1180,8 @@ function App() {
               href="#contact"
               className="primary-btn"
             >
-              Get Free Digital Audit →
+              Get Free Digital
+              Audit →
             </a>
 
             <a
@@ -1080,18 +1196,33 @@ function App() {
           <div className="trust">
 
             <div>
-              <strong>AI</strong>
-              <span>Powered</span>
+              <strong>
+                AI
+              </strong>
+
+              <span>
+                Powered
+              </span>
             </div>
 
             <div>
-              <strong>24/7</strong>
-              <span>Automation</span>
+              <strong>
+                24/7
+              </strong>
+
+              <span>
+                Automation
+              </span>
             </div>
 
             <div>
-              <strong>360°</strong>
-              <span>Digital Growth</span>
+              <strong>
+                360°
+              </strong>
+
+              <span>
+                Digital Growth
+              </span>
             </div>
 
           </div>
@@ -1105,7 +1236,9 @@ function App() {
             ✦
           </div>
 
-          <p>ARYANX AI</p>
+          <p>
+            ARYANX AI
+          </p>
 
           <h3>
             Your Business.
@@ -1116,13 +1249,23 @@ function App() {
           <div className="mini-stats">
 
             <div>
-              <span>Leads</span>
-              <strong>+128%</strong>
+              <span>
+                Leads
+              </span>
+
+              <strong>
+                +128%
+              </strong>
             </div>
 
             <div>
-              <span>Automation</span>
-              <strong>24/7</strong>
+              <span>
+                Automation
+              </span>
+
+              <strong>
+                24/7
+              </strong>
             </div>
 
           </div>
@@ -1153,8 +1296,9 @@ function App() {
           </h2>
 
           <p>
-            Simple digital solutions designed
-            to help your business build,
+            Simple digital solutions
+            designed to help your
+            business build,
             automate and grow.
           </p>
 
@@ -1168,11 +1312,14 @@ function App() {
               ◈
             </div>
 
-            <h3>Starter</h3>
+            <h3>
+              Starter
+            </h3>
 
             <p>
-              Perfect for businesses that are
-              just getting started online.
+              Perfect for businesses
+              that are just getting
+              started online.
             </p>
 
             <ul>
@@ -1185,11 +1332,13 @@ function App() {
               </li>
 
               <li>
-                Basic Social Media Setup
+                Basic Social Media
+                Setup
               </li>
 
               <li>
-                Contact & WhatsApp Integration
+                Contact & WhatsApp
+                Integration
               </li>
             </ul>
 
@@ -1209,11 +1358,14 @@ function App() {
               ✦
             </div>
 
-            <h3>Growth</h3>
+            <h3>
+              Growth
+            </h3>
 
             <p>
-              For businesses looking to
-              attract more customers online.
+              For businesses looking
+              to attract more customers
+              online.
             </p>
 
             <ul>
@@ -1246,11 +1398,13 @@ function App() {
               ◎
             </div>
 
-            <h3>AI Business</h3>
+            <h3>
+              AI Business
+            </h3>
 
             <p>
-              Smart automation systems for
-              modern businesses.
+              Smart automation systems
+              for modern businesses.
             </p>
 
             <ul>
@@ -1304,13 +1458,12 @@ function App() {
           </h2>
 
           <p>
-            Don't just take your business
-            online. Make it intelligent.
+            Don't just take your
+            business online. Make
+            it intelligent.
           </p>
 
           <div className="ai-features">
-
-            {/* 01 AI CUSTOMER SUPPORT */}
 
             <div
               role="button"
@@ -1331,21 +1484,23 @@ function App() {
                 }
               }}
               style={{
-                cursor: "pointer",
+                cursor:
+                  "pointer",
               }}
             >
-              <strong>01</strong>
+              <strong>
+                01
+              </strong>
 
               <span>
                 AI Customer Support
               </span>
 
               <small>
-                Click to open AI Assistant →
+                Click to open AI
+                Assistant →
               </small>
             </div>
-
-            {/* 02 LEAD FOLLOW-UP */}
 
             <div
               role="button"
@@ -1366,21 +1521,24 @@ function App() {
                 }
               }}
               style={{
-                cursor: "pointer",
+                cursor:
+                  "pointer",
               }}
             >
-              <strong>02</strong>
+              <strong>
+                02
+              </strong>
 
               <span>
-                Automated Lead Follow-up
+                Automated Lead
+                Follow-up
               </span>
 
               <small>
-                Click to manage follow-ups →
+                Click to manage
+                follow-ups →
               </small>
             </div>
-
-            {/* 03 ANALYTICS */}
 
             <div
               role="button"
@@ -1401,24 +1559,27 @@ function App() {
                 }
               }}
               style={{
-                cursor: "pointer",
+                cursor:
+                  "pointer",
               }}
             >
-              <strong>03</strong>
+              <strong>
+                03
+              </strong>
 
               <span>
-                Smart Business Analytics
+                Smart Business
+                Analytics
               </span>
 
               <small>
-                Click to view analytics →
+                Click to view
+                analytics →
               </small>
             </div>
 
           </div>
         </div>
-
-        {/* STATIC AI PREVIEW */}
 
         <div className="ai-dashboard">
 
@@ -1435,13 +1596,14 @@ function App() {
           <div className="chat">
 
             <div className="message customer">
-              Can you tell me about your
-              services?
+              Can you tell me
+              about your services?
             </div>
 
             <div className="message ai">
-              Absolutely! I'm AryanX AI.
-              How can I help your business
+              Absolutely! I'm
+              AryanX AI. How can
+              I help your business
               grow today?
             </div>
 
@@ -1450,8 +1612,9 @@ function App() {
             </div>
 
             <div className="message ai">
-              Great. Let's build your digital
-              growth system.
+              Great. Let's build
+              your digital growth
+              system.
             </div>
 
           </div>
@@ -1487,39 +1650,53 @@ function App() {
         <div className="about-content">
 
           <p>
-            AryanX Digital is an AI-powered
-            digital growth company helping
-            businesses build a stronger online
-            presence, automate their operations
-            and attract more customers.
+            AryanX Digital is an
+            AI-powered digital
+            growth company helping
+            businesses build a
+            stronger online
+            presence, automate
+            their operations and
+            attract more customers.
           </p>
 
           <p>
-            We combine modern web technology,
-            artificial intelligence, automation
-            and digital marketing to create
-            practical solutions that help
+            We combine modern web
+            technology, artificial
+            intelligence, automation
+            and digital marketing to
+            create practical
+            solutions that help
             businesses grow.
           </p>
 
           <div className="about-points">
 
             <div>
-              <strong>01</strong>
+              <strong>
+                01
+              </strong>
+
               <span>
                 Technology First
               </span>
             </div>
 
             <div>
-              <strong>02</strong>
+              <strong>
+                02
+              </strong>
+
               <span>
                 AI Powered
               </span>
             </div>
 
             <div>
-              <strong>03</strong>
+              <strong>
+                03
+              </strong>
+
               <span>
                 Growth Focused
               </span>
@@ -1551,8 +1728,9 @@ function App() {
           </h2>
 
           <p>
-            We build long-term digital growth
-            systems that combine technology,
+            We build long-term
+            digital growth systems
+            that combine technology,
             AI and business strategy.
           </p>
 
@@ -1566,12 +1744,16 @@ function App() {
               01
             </div>
 
-            <h3>AI First</h3>
+            <h3>
+              AI First
+            </h3>
 
             <p>
-              We use artificial intelligence
-              to make business processes
-              smarter and more efficient.
+              We use artificial
+              intelligence to make
+              business processes
+              smarter and more
+              efficient.
             </p>
 
           </div>
@@ -1582,12 +1764,15 @@ function App() {
               02
             </div>
 
-            <h3>Business Focused</h3>
+            <h3>
+              Business Focused
+            </h3>
 
             <p>
-              Every solution is designed
-              around your actual business
-              goals and customer needs.
+              Every solution is
+              designed around your
+              actual business goals
+              and customer needs.
             </p>
 
           </div>
@@ -1598,12 +1783,16 @@ function App() {
               03
             </div>
 
-            <h3>Built to Scale</h3>
+            <h3>
+              Built to Scale
+            </h3>
 
             <p>
-              Our systems are designed to
-              grow with your business, from
-              the first customer to thousands.
+              Our systems are
+              designed to grow with
+              your business, from the
+              first customer to
+              thousands.
             </p>
 
           </div>
@@ -1614,12 +1803,15 @@ function App() {
               04
             </div>
 
-            <h3>Long-Term Support</h3>
+            <h3>
+              Long-Term Support
+            </h3>
 
             <p>
               We don't disappear after
-              delivery. We help businesses
-              continuously improve and grow.
+              delivery. We help
+              businesses continuously
+              improve and grow.
             </p>
 
           </div>
@@ -1651,9 +1843,10 @@ function App() {
           </h2>
 
           <p>
-            Add, view, update and delete
-            data directly through the
-            AryanX Digital website.
+            Add, view, update and
+            delete data directly
+            through the AryanX
+            Digital website.
           </p>
 
         </div>
@@ -1666,7 +1859,9 @@ function App() {
             Add New Record
           </h3>
 
-          <form onSubmit={addData}>
+          <form
+            onSubmit={addData}
+          >
 
             <input
               type="text"
@@ -1722,9 +1917,10 @@ function App() {
           </h2>
 
           <p>
-            This data is coming directly
-            from our Express API and
-            MongoDB Atlas database.
+            This data is coming
+            directly from our
+            Express API and MongoDB
+            Atlas database.
           </p>
 
         </div>
@@ -1749,10 +1945,12 @@ function App() {
                 key={test._id}
               >
 
-                {editingId === test._id ? (
+                {editingId ===
+                test._id ? (
                   <>
                     <span>
-                      EDIT DATABASE RECORD
+                      EDIT DATABASE
+                      RECORD
                     </span>
 
                     <input
@@ -1770,7 +1968,9 @@ function App() {
                     />
 
                     <textarea
-                      value={editMessage}
+                      value={
+                        editMessage
+                      }
                       onChange={(e) =>
                         setEditMessage(
                           e.target.value
@@ -1785,10 +1985,14 @@ function App() {
 
                     <div
                       style={{
-                        display: "flex",
-                        gap: "10px",
-                        marginTop: "15px",
-                        flexWrap: "wrap",
+                        display:
+                          "flex",
+                        gap:
+                          "10px",
+                        marginTop:
+                          "15px",
+                        flexWrap:
+                          "wrap",
                       }}
                     >
 
@@ -1813,7 +2017,9 @@ function App() {
 
                       <button
                         type="button"
-                        onClick={cancelEdit}
+                        onClick={
+                          cancelEdit
+                        }
                         disabled={
                           updatingId ===
                           test._id
@@ -1856,17 +2062,23 @@ function App() {
 
                     <div
                       style={{
-                        display: "flex",
-                        gap: "10px",
-                        marginTop: "18px",
-                        flexWrap: "wrap",
+                        display:
+                          "flex",
+                        gap:
+                          "10px",
+                        marginTop:
+                          "18px",
+                        flexWrap:
+                          "wrap",
                       }}
                     >
 
                       <button
                         type="button"
                         onClick={() =>
-                          startEdit(test)
+                          startEdit(
+                            test
+                          )
                         }
                         disabled={
                           deletingId ===
@@ -1878,7 +2090,8 @@ function App() {
                             "10px 18px",
                           borderRadius:
                             "8px",
-                          border: "none",
+                          border:
+                            "none",
                           cursor:
                             "pointer",
                         }}
@@ -1902,7 +2115,8 @@ function App() {
                             "10px 18px",
                           borderRadius:
                             "8px",
-                          border: "none",
+                          border:
+                            "none",
                           cursor:
                             "pointer",
                         }}
@@ -1928,28 +2142,39 @@ function App() {
 
         <div
           style={{
-            textAlign: "center",
-            marginTop: "30px",
+            textAlign:
+              "center",
+            marginTop:
+              "30px",
           }}
         >
 
           <button
             type="button"
-            onClick={handleRefresh}
+            onClick={
+              handleRefresh
+            }
             disabled={
-              loading || refreshing
+              loading ||
+              refreshing
             }
             style={{
-              padding: "12px 24px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              background: "transparent",
+              padding:
+                "12px 24px",
+              borderRadius:
+                "8px",
+              border:
+                "1px solid #ccc",
+              background:
+                "transparent",
               cursor:
-                loading || refreshing
+                loading ||
+                refreshing
                   ? "not-allowed"
                   : "pointer",
               opacity:
-                loading || refreshing
+                loading ||
+                refreshing
                   ? 0.6
                   : 1,
             }}
@@ -1969,7 +2194,8 @@ function App() {
           className="section-heading"
           id="followup"
           style={{
-            marginTop: "80px",
+            marginTop:
+              "80px",
           }}
         >
 
@@ -1986,9 +2212,10 @@ function App() {
           </h2>
 
           <p>
-            All enquiries submitted through
-            the Free Digital Audit form are
-            stored securely in MongoDB.
+            All enquiries submitted
+            through the Free Digital
+            Audit form are stored
+            securely in MongoDB.
           </p>
 
         </div>
@@ -2000,19 +2227,22 @@ function App() {
         <div
           id="analytics"
           style={{
-            scrollMarginTop: "100px",
+            scrollMarginTop:
+              "100px",
           }}
         >
 
           <div
             className="section-heading"
             style={{
-              marginTop: "50px",
+              marginTop:
+                "50px",
             }}
           >
 
             <span>
-              SMART BUSINESS ANALYTICS
+              SMART BUSINESS
+              ANALYTICS
             </span>
 
             <h2>
@@ -2024,10 +2254,11 @@ function App() {
             </h2>
 
             <p>
-              Track customer enquiries,
-              lead activity, conversion and
-              business categories from one
-              dashboard.
+              Track customer
+              enquiries, lead
+              activity, conversion
+              and business categories
+              from one dashboard.
             </p>
 
           </div>
@@ -2036,11 +2267,14 @@ function App() {
 
           <div
             style={{
-              display: "grid",
+              display:
+                "grid",
               gridTemplateColumns:
-                "repeat(3, 1fr)",
-              gap: "20px",
-              margin: "40px 0",
+                "repeat(3, minmax(0, 1fr))",
+              gap:
+                "20px",
+              margin:
+                "40px 0",
             }}
           >
 
@@ -2054,7 +2288,8 @@ function App() {
               </h2>
 
               <p>
-                All customer enquiries
+                All customer
+                enquiries
               </p>
             </div>
 
@@ -2082,7 +2317,8 @@ function App() {
               </h2>
 
               <p>
-                Different business categories
+                Different business
+                categories
               </p>
             </div>
 
@@ -2092,10 +2328,12 @@ function App() {
 
           <div
             style={{
-              display: "grid",
+              display:
+                "grid",
               gridTemplateColumns:
-                "repeat(3, 1fr)",
-              gap: "20px",
+                "repeat(4, minmax(0, 1fr))",
+              gap:
+                "20px",
               margin:
                 "20px 0 40px",
             }}
@@ -2111,7 +2349,8 @@ function App() {
               </h2>
 
               <p>
-                Leads already contacted
+                Leads already
+                contacted
               </p>
             </div>
 
@@ -2125,7 +2364,23 @@ function App() {
               </h2>
 
               <p>
-                Successfully converted leads
+                Successfully
+                converted leads
+              </p>
+            </div>
+
+            <div className="backend-card">
+              <span>
+                CLOSED LEADS
+              </span>
+
+              <h2>
+                {closedLeads}
+              </h2>
+
+              <p>
+                Closed customer
+                enquiries
               </p>
             </div>
 
@@ -2139,7 +2394,8 @@ function App() {
               </h2>
 
               <p>
-                Lead conversion performance
+                Lead conversion
+                performance
               </p>
             </div>
 
@@ -2149,11 +2405,14 @@ function App() {
 
           <div
             style={{
-              display: "grid",
+              display:
+                "grid",
               gridTemplateColumns:
-                "repeat(2, 1fr)",
-              gap: "20px",
-              marginBottom: "50px",
+                "repeat(2, minmax(0, 1fr))",
+              gap:
+                "20px",
+              marginBottom:
+                "50px",
             }}
           >
 
@@ -2167,7 +2426,8 @@ function App() {
               </h2>
 
               <p>
-                Percentage of leads contacted
+                Percentage of leads
+                contacted
               </p>
             </div>
 
@@ -2181,7 +2441,8 @@ function App() {
               </h2>
 
               <p>
-                New leads ready for follow-up
+                New leads ready for
+                follow-up
               </p>
             </div>
 
@@ -2195,7 +2456,8 @@ function App() {
 
         <div
           style={{
-            maxWidth: "600px",
+            maxWidth:
+              "600px",
             margin:
               "0 auto 30px",
           }}
@@ -2211,38 +2473,47 @@ function App() {
               )
             }
             style={{
-              width: "100%",
+              width:
+                "100%",
               padding:
                 "14px 18px",
               borderRadius:
                 "10px",
               border:
                 "1px solid #ccc",
-              fontSize: "15px",
+              fontSize:
+                "15px",
               boxSizing:
                 "border-box",
-              outline: "none",
+              outline:
+                "none",
             }}
           />
 
           <select
-            value={leadTypeFilter}
+            value={
+              leadTypeFilter
+            }
             onChange={(e) =>
               setLeadTypeFilter(
                 e.target.value
               )
             }
             style={{
-              width: "100%",
+              width:
+                "100%",
               padding:
                 "14px 18px",
               borderRadius:
                 "10px",
               border:
                 "1px solid #ccc",
-              fontSize: "15px",
-              marginTop: "12px",
-              outline: "none",
+              fontSize:
+                "15px",
+              marginTop:
+                "12px",
+              outline:
+                "none",
             }}
           >
 
@@ -2257,34 +2528,43 @@ function App() {
                     (lead) =>
                       lead.type
                   )
-                  .filter(Boolean)
+                  .filter(
+                    Boolean
+                  )
               ),
-            ].map((type) => (
+            ].map(
+              (type) => (
 
-              <option
-                key={type}
-                value={type}
-              >
-                {type}
-              </option>
+                <option
+                  key={type}
+                  value={type}
+                >
+                  {type}
+                </option>
 
-            ))}
+              )
+            )}
 
           </select>
 
           <button
             type="button"
-            onClick={clearLeadFilters}
+            onClick={
+              clearLeadFilters
+            }
             style={{
-              marginTop: "12px",
+              marginTop:
+                "12px",
               padding:
                 "10px 18px",
               borderRadius:
                 "8px",
-              border: "none",
+              border:
+                "none",
               cursor:
                 "pointer",
-              fontSize: "14px",
+              fontSize:
+                "14px",
             }}
           >
             ✕ Clear Filters
@@ -2298,256 +2578,273 @@ function App() {
 
         {leadsLoading ? (
           <p className="backend-loading">
-            Loading customer enquiries...
+            Loading customer
+            enquiries...
           </p>
-        ) : filteredLeads.length === 0 ? (
+        ) : filteredLeads.length ===
+          0 ? (
           <p className="backend-loading">
-            No matching customer enquiry
-            found.
+            No matching customer
+            enquiry found.
           </p>
         ) : (
           <div className="backend-data-grid">
 
-            {filteredLeads.map((lead) => (
-
-              <div
-                className="backend-card"
-                key={lead._id}
-              >
-
-                <span>
-                  CUSTOMER ENQUIRY
-                </span>
-
-                <h3>
-                  {lead.business}
-                </h3>
-
-                <p>
-                  <strong>
-                    Customer:
-                  </strong>{" "}
-                  {lead.name}
-                </p>
-
-                <p>
-                  <strong>
-                    Phone:
-                  </strong>{" "}
-                  {lead.phone}
-                </p>
-
-                <p>
-                  <strong>
-                    Email:
-                  </strong>{" "}
-                  {lead.email}
-                </p>
-
-                <p>
-                  <strong>
-                    Business Type:
-                  </strong>{" "}
-                  {lead.type}
-                </p>
-
-                {/* LEAD STATUS */}
+            {filteredLeads.map(
+              (lead) => (
 
                 <div
-                  style={{
-                    marginTop: "15px",
-                  }}
+                  className="backend-card"
+                  key={lead._id}
                 >
 
-                  <strong>
-                    Lead Status:
-                  </strong>
+                  <span>
+                    CUSTOMER ENQUIRY
+                  </span>
 
-                  <select
-                    value={
-                      lead.status ||
-                      "New"
-                    }
-                    onChange={(e) =>
-                      updateLeadStatus(
-                        lead._id,
-                        e.target.value
-                      )
-                    }
-                    disabled={
-                      updatingId ===
-                      lead._id
-                    }
+                  <h3>
+                    {lead.business}
+                  </h3>
+
+                  <p>
+                    <strong>
+                      Customer:
+                    </strong>{" "}
+                    {lead.name}
+                  </p>
+
+                  <p>
+                    <strong>
+                      Phone:
+                    </strong>{" "}
+                    {lead.phone}
+                  </p>
+
+                  <p>
+                    <strong>
+                      Email:
+                    </strong>{" "}
+                    {lead.email}
+                  </p>
+
+                  <p>
+                    <strong>
+                      Business Type:
+                    </strong>{" "}
+                    {lead.type}
+                  </p>
+
+                  {/* LEAD STATUS */}
+
+                  <div
                     style={{
-                      width: "100%",
-                      padding:
-                        "10px 12px",
                       marginTop:
-                        "8px",
-                      borderRadius:
-                        "8px",
-                      border:
-                        "1px solid #ccc",
-                      fontSize: "14px",
-                      cursor:
+                        "15px",
+                    }}
+                  >
+
+                    <strong>
+                      Lead Status:
+                    </strong>
+
+                    <select
+                      value={
+                        lead.status ||
+                        "New"
+                      }
+                      onChange={(e) =>
+                        updateLeadStatus(
+                          lead._id,
+                          e.target.value
+                        )
+                      }
+                      disabled={
                         updatingId ===
                         lead._id
-                          ? "not-allowed"
-                          : "pointer",
-                      outline:
-                        "none",
-                    }}
-                  >
+                      }
+                      style={{
+                        width:
+                          "100%",
+                        padding:
+                          "10px 12px",
+                        marginTop:
+                          "8px",
+                        borderRadius:
+                          "8px",
+                        border:
+                          "1px solid #ccc",
+                        fontSize:
+                          "14px",
+                        cursor:
+                          updatingId ===
+                          lead._id
+                            ? "not-allowed"
+                            : "pointer",
+                        outline:
+                          "none",
+                      }}
+                    >
 
-                    <option value="New">
-                      New
-                    </option>
+                      <option value="New">
+                        New
+                      </option>
 
-                    <option value="Contacted">
-                      Contacted
-                    </option>
+                      <option value="Contacted">
+                        Contacted
+                      </option>
 
-                    <option value="Converted">
-                      Converted
-                    </option>
+                      <option value="Converted">
+                        Converted
+                      </option>
 
-                  </select>
+                      <option value="Closed">
+                        Closed
+                      </option>
 
-                </div>
+                    </select>
 
-                <small>
-                  Created At:{" "}
-                  {lead.createdAt
-                    ? new Date(
-                        lead.createdAt
-                      ).toLocaleString()
-                    : "N/A"}
-                </small>
+                  </div>
 
-                {/* LEAD ACTIONS */}
+                  <small>
+                    Created At:{" "}
+                    {lead.createdAt
+                      ? new Date(
+                          lead.createdAt
+                        ).toLocaleString()
+                      : "N/A"}
+                  </small>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "10px",
-                    marginTop:
-                      "18px",
-                    flexWrap:
-                      "wrap",
-                  }}
-                >
+                  {/* LEAD ACTIONS */}
 
-                  {/* AUTOMATED FOLLOW-UP */}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      sendLeadFollowUp(
-                        lead
-                      )
-                    }
+                  <div
                     style={{
-                      padding:
-                        "10px 18px",
-                      borderRadius:
-                        "8px",
-                      border: "none",
-                      cursor:
-                        "pointer",
-                      fontWeight:
-                        "600",
+                      display:
+                        "flex",
+                      gap:
+                        "10px",
+                      marginTop:
+                        "18px",
+                      flexWrap:
+                        "wrap",
                     }}
                   >
-                    📲 Follow-up
-                  </button>
 
-                  {/* WHATSAPP */}
+                    {/* AUTOMATED FOLLOW-UP */}
 
-                  <button
-                    type="button"
-                    onClick={() => {
+                    <button
+                      type="button"
+                      onClick={() =>
+                        sendLeadFollowUp(
+                          lead
+                        )
+                      }
+                      style={{
+                        padding:
+                          "10px 18px",
+                        borderRadius:
+                          "8px",
+                        border:
+                          "none",
+                        cursor:
+                          "pointer",
+                        fontWeight:
+                          "600",
+                      }}
+                    >
+                      📲 Follow-up
+                    </button>
 
-                      const cleanPhone =
-                        String(
-                          lead.phone || ""
-                        ).replace(
-                          /\D/g,
-                          ""
+                    {/* WHATSAPP */}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+
+                        const cleanPhone =
+                          String(
+                            lead.phone ||
+                              ""
+                          ).replace(
+                            /\D/g,
+                            ""
+                          );
+
+                        const whatsappNumber =
+                          cleanPhone.length ===
+                          10
+                            ? "91" +
+                              cleanPhone
+                            : cleanPhone;
+
+                        const message =
+                          "Hello " +
+                          (lead.name ||
+                            "there") +
+                          ", this is AryanX Digital. How can we help your business grow?";
+
+                        window.open(
+                          "https://wa.me/" +
+                            whatsappNumber +
+                            "?text=" +
+                            encodeURIComponent(
+                              message
+                            ),
+                          "_blank"
                         );
+                      }}
+                      style={{
+                        padding:
+                          "10px 18px",
+                        borderRadius:
+                          "8px",
+                        border:
+                          "none",
+                        cursor:
+                          "pointer",
+                      }}
+                    >
+                      💬 WhatsApp
+                    </button>
 
-                      const whatsappNumber =
-                        cleanPhone.length ===
-                        10
-                          ? "91" +
-                            cleanPhone
-                          : cleanPhone;
+                    {/* DELETE */}
 
-                      const message =
-                        "Hello " +
-                        (lead.name ||
-                          "there") +
-                        ", this is AryanX Digital. How can we help your business grow?";
-
-                      window.open(
-                        "https://wa.me/" +
-                          whatsappNumber +
-                          "?text=" +
-                          encodeURIComponent(
-                            message
-                          ),
-                        "_blank"
-                      );
-                    }}
-                    style={{
-                      padding:
-                        "10px 18px",
-                      borderRadius:
-                        "8px",
-                      border: "none",
-                      cursor:
-                        "pointer",
-                    }}
-                  >
-                    💬 WhatsApp
-                  </button>
-
-                  {/* DELETE */}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      deleteLead(
-                        lead._id
-                      )
-                    }
-                    disabled={
-                      deletingLeadId ===
-                      lead._id
-                    }
-                    style={{
-                      padding:
-                        "10px 18px",
-                      borderRadius:
-                        "8px",
-                      border: "none",
-                      cursor:
+                    <button
+                      type="button"
+                      onClick={() =>
+                        deleteLead(
+                          lead._id
+                        )
+                      }
+                      disabled={
                         deletingLeadId ===
                         lead._id
-                          ? "not-allowed"
-                          : "pointer",
-                    }}
-                  >
-                    {deletingLeadId ===
-                    lead._id
-                      ? "Deleting..."
-                      : "🗑️ Delete"}
-                  </button>
+                      }
+                      style={{
+                        padding:
+                          "10px 18px",
+                        borderRadius:
+                          "8px",
+                        border:
+                          "none",
+                        cursor:
+                          deletingLeadId ===
+                          lead._id
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    >
+                      {deletingLeadId ===
+                      lead._id
+                        ? "Deleting..."
+                        : "🗑️ Delete"}
+                    </button>
+
+                  </div>
 
                 </div>
 
-              </div>
-
-            ))}
+              )
+            )}
 
           </div>
         )}
@@ -2566,7 +2863,8 @@ function App() {
         <div className="cta-content">
 
           <span>
-            START YOUR DIGITAL JOURNEY
+            START YOUR DIGITAL
+            JOURNEY
           </span>
 
           <h2>
@@ -2578,10 +2876,11 @@ function App() {
           </h2>
 
           <p>
-            Tell us about your business
-            and discover how AryanX Digital
-            can help you build, automate
-            and grow.
+            Tell us about your
+            business and discover
+            how AryanX Digital can
+            help you build,
+            automate and grow.
           </p>
 
           <div className="contact-info">
@@ -2658,12 +2957,16 @@ function App() {
                 return;
               }
 
-              if (isAdminLoggedIn) {
+              if (
+                isAdminLoggedIn
+              ) {
 
-                setLeads((prev) => [
-                  result.data,
-                  ...prev,
-                ]);
+                setLeads(
+                  (prev) => [
+                    result.data,
+                    ...prev,
+                  ]
+                );
 
               }
 
@@ -2798,7 +3101,7 @@ function App() {
 
       </section>
 
-            {/* =========================
+      {/* =========================
           FOOTER
       ========================= */}
 
@@ -2806,7 +3109,9 @@ function App() {
 
         <div className="footer-logo">
           ARYAN
-          <span>X</span>
+          <span>
+            X
+          </span>
           <small>
             DIGITAL
           </small>
@@ -2864,52 +3169,81 @@ function App() {
       <button
         type="button"
         onClick={() =>
-          setIsChatOpen((prev) => !prev)
+          setIsChatOpen(
+            (prev) => !prev
+          )
         }
         aria-label="Open AryanX AI Chat"
         style={{
-          position: "fixed",
-          right: "25px",
-          bottom: "25px",
-          width: "60px",
-          height: "60px",
-          borderRadius: "50%",
-          border: "none",
-          background: "#2563eb",
-          color: "#ffffff",
-          fontSize: "26px",
-          fontWeight: "700",
-          cursor: "pointer",
-          zIndex: 999999,
+          position:
+            "fixed",
+          right:
+            "25px",
+          bottom:
+            "25px",
+          width:
+            "60px",
+          height:
+            "60px",
+          borderRadius:
+            "50%",
+          border:
+            "none",
+          background:
+            "#2563eb",
+          color:
+            "#ffffff",
+          fontSize:
+            "26px",
+          fontWeight:
+            "700",
+          cursor:
+            "pointer",
+          zIndex:
+            999999,
           boxShadow:
             "0 10px 30px rgba(0,0,0,0.4)",
         }}
       >
-        {isChatOpen ? "×" : "✦"}
+        {isChatOpen
+          ? "×"
+          : "✦"}
       </button>
 
       {isChatOpen && (
         <div
           id="ai-chat-window"
           style={{
-            position: "fixed",
-            right: "25px",
-            bottom: "100px",
-            width: "360px",
+            position:
+              "fixed",
+            right:
+              "25px",
+            bottom:
+              "100px",
+            width:
+              "360px",
             maxWidth:
               "calc(100vw - 40px)",
-            height: "500px",
-            background: "#080d1d",
+            height:
+              "500px",
+            background:
+              "#080d1d",
             border:
               "1px solid #2563eb",
-            borderRadius: "18px",
-            padding: "18px",
-            zIndex: 999998,
+            borderRadius:
+              "18px",
+            padding:
+              "18px",
+            zIndex:
+              999998,
             boxShadow:
               "0 20px 60px rgba(0,0,0,0.6)",
-            display: "flex",
-            flexDirection: "column",
-            boxSizing: "border-box",
+            display:
+              "flex",
+            flexDirection:
+              "column",
+            boxSizing:
+              "border-box",
           }}
         >
 
@@ -2917,11 +3251,14 @@ function App() {
 
           <div
             style={{
-              display: "flex",
+              display:
+                "flex",
               justifyContent:
                 "space-between",
-              alignItems: "center",
-              paddingBottom: "14px",
+              alignItems:
+                "center",
+              paddingBottom:
+                "14px",
               borderBottom:
                 "1px solid rgba(255,255,255,0.1)",
             }}
@@ -2931,9 +3268,12 @@ function App() {
 
               <strong
                 style={{
-                  display: "block",
-                  color: "#ffffff",
-                  fontSize: "15px",
+                  display:
+                    "block",
+                  color:
+                    "#ffffff",
+                  fontSize:
+                    "15px",
                 }}
               >
                 ✦ ARYANX AI
@@ -2941,8 +3281,10 @@ function App() {
 
               <span
                 style={{
-                  color: "#22c55e",
-                  fontSize: "11px",
+                  color:
+                    "#22c55e",
+                  fontSize:
+                    "11px",
                 }}
               >
                 ● Online
@@ -2952,15 +3294,21 @@ function App() {
 
             <button
               type="button"
-              onClick={clearAIChat}
+              onClick={
+                clearAIChat
+              }
               title="Clear chat"
               style={{
-                border: "none",
+                border:
+                  "none",
                 background:
                   "transparent",
-                color: "#94a3b8",
-                fontSize: "20px",
-                cursor: "pointer",
+                color:
+                  "#94a3b8",
+                fontSize:
+                  "20px",
+                cursor:
+                  "pointer",
               }}
             >
               ↻
@@ -2972,19 +3320,30 @@ function App() {
 
           <div
             style={{
-              flex: 1,
-              overflowY: "auto",
-              padding: "15px 2px",
+              flex:
+                1,
+              overflowY:
+                "auto",
+              padding:
+                "15px 2px",
             }}
           >
 
             {chatMessages.map(
-              (chat, index) => (
+              (
+                chat,
+                index
+              ) => (
+
                 <div
-                  key={index}
+                  key={
+                    index
+                  }
                   style={{
-                    maxWidth: "82%",
-                    marginBottom: "10px",
+                    maxWidth:
+                      "82%",
+                    marginBottom:
+                      "10px",
                     marginLeft:
                       chat.sender ===
                       "user"
@@ -3004,29 +3363,37 @@ function App() {
                       "user"
                         ? "#e2e8f0"
                         : "#bfdbfe",
-                    fontSize: "12px",
-                    lineHeight: "1.5",
+                    fontSize:
+                      "12px",
+                    lineHeight:
+                      "1.5",
                     wordBreak:
                       "break-word",
                   }}
                 >
-                  {chat.text}
+                  {
+                    chat.text
+                  }
                 </div>
+
               )
             )}
 
             {chatLoading && (
               <div
                 style={{
-                  maxWidth: "82%",
+                  maxWidth:
+                    "82%",
                   padding:
                     "11px 13px",
                   borderRadius:
                     "11px",
                   background:
                     "rgba(37,99,235,0.15)",
-                  color: "#93c5fd",
-                  fontSize: "12px",
+                  color:
+                    "#93c5fd",
+                  fontSize:
+                    "12px",
                 }}
               >
                 AryanX AI is
@@ -3039,11 +3406,16 @@ function App() {
           {/* CHAT INPUT */}
 
           <form
-            onSubmit={sendAIMessage}
+            onSubmit={
+              sendAIMessage
+            }
             style={{
-              display: "flex",
-              gap: "8px",
-              paddingTop: "12px",
+              display:
+                "flex",
+              gap:
+                "8px",
+              paddingTop:
+                "12px",
               borderTop:
                 "1px solid rgba(255,255,255,0.1)",
             }}
@@ -3052,24 +3424,34 @@ function App() {
             <input
               type="text"
               placeholder="Ask AryanX AI..."
-              value={chatMessage}
+              value={
+                chatMessage
+              }
               onChange={(e) =>
                 setChatMessage(
                   e.target.value
                 )
               }
-              disabled={chatLoading}
+              disabled={
+                chatLoading
+              }
               style={{
-                flex: 1,
-                minWidth: 0,
-                padding: "12px",
-                borderRadius: "9px",
+                flex:
+                  1,
+                minWidth:
+                  0,
+                padding:
+                  "12px",
+                borderRadius:
+                  "9px",
                 border:
                   "1px solid rgba(255,255,255,0.15)",
                 background:
                   "#0f172a",
-                color: "#ffffff",
-                outline: "none",
+                color:
+                  "#ffffff",
+                outline:
+                  "none",
                 boxSizing:
                   "border-box",
               }}
@@ -3082,12 +3464,16 @@ function App() {
                 !chatMessage.trim()
               }
               style={{
-                width: "45px",
-                border: "none",
-                borderRadius: "9px",
+                width:
+                  "45px",
+                border:
+                  "none",
+                borderRadius:
+                  "9px",
                 background:
                   "#2563eb",
-                color: "#ffffff",
+                color:
+                  "#ffffff",
                 cursor:
                   chatLoading ||
                   !chatMessage.trim()
@@ -3098,7 +3484,8 @@ function App() {
                   !chatMessage.trim()
                     ? 0.5
                     : 1,
-                fontSize: "16px",
+                fontSize:
+                  "16px",
               }}
             >
               ➤
