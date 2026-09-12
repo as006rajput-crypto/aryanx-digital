@@ -3133,12 +3133,11 @@ function App() {
           </select>
 
           <button
-            type="submit"
-            className="primary-btn"
-          >
-            Get Free Digital Audit →
-          </button>
-
+  type="submit"
+  className="primary-btn"
+>
+  Get Free Digital Audit →
+</button>
         </form>
 
       </section>
