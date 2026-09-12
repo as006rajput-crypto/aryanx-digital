@@ -131,6 +131,22 @@ function App() {
   };
 
   // =========================
+  // SCROLL TO CONTACT / AUDIT
+  // =========================
+
+  const scrollToContact = () => {
+    const contactSection =
+      document.getElementById("contact");
+
+    if (contactSection) {
+      contactSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
+  // =========================
   // AI CONVERSATION MEMORY
   // =========================
 
@@ -1232,12 +1248,11 @@ function App() {
           <div className="hero-buttons">
 
             <a
-              href="#contact"
-              className="primary-btn"
-            >
-              Get Free Digital
-              Audit →
-            </a>
+  href="#contact"
+  className="primary-btn"
+>
+  Get Free Digital Audit →
+</a>
 
             <a
               href="#services"
@@ -3133,11 +3148,12 @@ function App() {
           </select>
 
           <button
-  type="submit"
-  className="primary-btn"
->
-  Get Free Digital Audit →
-</button>
+            type="submit"
+            className="primary-btn"
+          >
+            Get Free Digital Audit →
+          </button>
+
         </form>
 
       </section>
