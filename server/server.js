@@ -11,7 +11,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const Test = require("./models/Test");
+const Test = require("./models/test");
 const Lead = require("./models/Lead");
 
 const app = express();
