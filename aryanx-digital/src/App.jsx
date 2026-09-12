@@ -3,13 +3,21 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import AdminLogin from "./AdminLogin";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const API = (endpoint) => {
   return API_URL + endpoint;
 };
 
 function App() {
+  // =========================
+  // ROUTE
+  // =========================
+
+  const isAdminPage =
+    window.location.pathname === "/admin" ||
+    window.location.pathname.startsWith("/admin/");
+
   // =========================
   // ADMIN AUTH
   // =========================
@@ -53,7 +61,7 @@ function App() {
   const [toast, setToast] = useState(null);
 
   // =========================
-  // DAY 7/8 - AI CHATBOT
+  // AI CHATBOT
   // =========================
 
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -123,7 +131,7 @@ function App() {
   };
 
   // =========================
-  // DAY 8 - AI CONVERSATION MEMORY
+  // AI CONVERSATION MEMORY
   // =========================
 
   const sendAIMessage = async (e) => {
@@ -137,13 +145,6 @@ function App() {
       return;
     }
 
-    /*
-      Create conversation history BEFORE adding
-      the new user message.
-
-      This allows the backend/AI to understand
-      what the user was talking about previously.
-    */
     const conversationHistory = chatMessages
       .filter((chat) => chat.text?.trim())
       .map((chat) => ({
@@ -154,7 +155,6 @@ function App() {
         text: chat.text,
       }));
 
-    // Add current user message to UI
     setChatMessages((prev) => [
       ...prev,
       {
@@ -176,9 +176,6 @@ function App() {
           },
           body: JSON.stringify({
             message: trimmedMessage,
-
-            // Send previous conversation
-            // to the backend for AI memory.
             history: conversationHistory,
           }),
         }
@@ -264,6 +261,16 @@ function App() {
     }
 
     if (feature === "followup") {
+      if (!isAdminPage || !isAdminLoggedIn) {
+        showToast(
+          "Admin login is required to manage lead follow-ups.",
+          "error"
+        );
+
+        window.location.href = "/admin";
+        return;
+      }
+
       const followupSection =
         document.getElementById("followup");
 
@@ -281,6 +288,16 @@ function App() {
     }
 
     if (feature === "analytics") {
+      if (!isAdminPage || !isAdminLoggedIn) {
+        showToast(
+          "Admin login is required to view analytics.",
+          "error"
+        );
+
+        window.location.href = "/admin";
+        return;
+      }
+
       const analyticsSection =
         document.getElementById("analytics");
 
@@ -303,6 +320,10 @@ function App() {
   // =========================
 
   const loadData = async () => {
+    if (!isAdminPage || !isAdminLoggedIn) {
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -343,6 +364,11 @@ function App() {
   // =========================
 
   const loadLeads = async () => {
+    if (!isAdminPage || !isAdminLoggedIn) {
+      setLeads([]);
+      return;
+    }
+
     const token =
       localStorage.getItem("adminToken");
 
@@ -412,6 +438,10 @@ function App() {
   // =========================
 
   const handleRefresh = async () => {
+    if (!isAdminPage || !isAdminLoggedIn) {
+      return;
+    }
+
     try {
       setRefreshing(true);
 
@@ -894,8 +924,7 @@ function App() {
       `We received your enquiry for ${
         lead.business ||
         "your business"
-      } ` +
-      `and wanted to follow up regarding your Free Digital Audit.\n\n` +
+      } and wanted to follow up regarding your Free Digital Audit.\n\n` +
       `Please let us know a convenient time to discuss your requirements.\n\n` +
       `Thank you,\nAryanX Digital`;
 
@@ -940,23 +969,39 @@ function App() {
 
     setIsAdminLoggedIn(false);
     setLeads([]);
+    setTests([]);
+
+    if (window.location.pathname !== "/") {
+      window.location.href = "/";
+    }
   };
 
   // =========================
-  // LOAD DATA ON PAGE LOAD
+  // LOGIN SUCCESS
+  // =========================
+
+  const handleAdminLogin = () => {
+    setIsAdminLoggedIn(true);
+    loadLeads();
+    loadData();
+  };
+
+  // =========================
+  // LOAD ADMIN DATA
   // =========================
 
   useEffect(() => {
-    loadData();
-
     if (
-      localStorage.getItem(
-        "adminToken"
-      )
+      isAdminPage &&
+      isAdminLoggedIn
     ) {
+      loadData();
       loadLeads();
     }
-  }, []);
+  }, [
+    isAdminPage,
+    isAdminLoggedIn,
+  ]);
 
   // =========================
   // FILTERED LEADS
@@ -1007,22 +1052,22 @@ function App() {
   };
 
   // =========================
-  // ADMIN LOGIN
+  // ADMIN LOGIN PAGE
   // =========================
 
-  if (!isAdminLoggedIn) {
+  if (
+    isAdminPage &&
+    !isAdminLoggedIn
+  ) {
     return (
       <AdminLogin
-        onLogin={() => {
-          setIsAdminLoggedIn(true);
-          loadLeads();
-        }}
+        onLogin={handleAdminLogin}
       />
     );
   }
 
   // =========================
-  // MAIN APP
+  // MAIN PUBLIC WEBSITE
   // =========================
 
   return (
@@ -1085,6 +1130,7 @@ function App() {
         </div>
 
         <div className="nav-links">
+
           <a href="#services">
             Services
           </a>
@@ -1097,23 +1143,27 @@ function App() {
             AI Solutions
           </a>
 
-          <a href="#database">
-            Database
-          </a>
+          {isAdminPage &&
+            isAdminLoggedIn && (
+              <a href="#database">
+                Database
+              </a>
+            )}
 
           <a href="#contact">
             Contact
           </a>
+
         </div>
 
         <div
           style={{
             display: "flex",
             gap: "10px",
-            alignItems:
-              "center",
+            alignItems: "center",
           }}
         >
+
           <a
             href="#contact"
             className="nav-btn"
@@ -1121,26 +1171,31 @@ function App() {
             Get Started
           </a>
 
-          <button
-            type="button"
-            onClick={
-              handleLogout
-            }
-            style={{
-              padding:
-                "10px 18px",
-              borderRadius:
-                "8px",
-              border: "none",
-              cursor:
-                "pointer",
-              fontWeight:
-                "600",
-            }}
-          >
-            🚪 Logout
-          </button>
+          {isAdminPage &&
+            isAdminLoggedIn && (
+              <button
+                type="button"
+                onClick={
+                  handleLogout
+                }
+                style={{
+                  padding:
+                    "10px 18px",
+                  borderRadius:
+                    "8px",
+                  border: "none",
+                  cursor:
+                    "pointer",
+                  fontWeight:
+                    "600",
+                }}
+              >
+                🚪 Logout
+              </button>
+            )}
+
         </div>
+
       </nav>
 
       {/* =========================
@@ -1226,6 +1281,7 @@ function App() {
             </div>
 
           </div>
+
         </div>
 
         <div className="hero-card">
@@ -1269,7 +1325,9 @@ function App() {
             </div>
 
           </div>
+
         </div>
+
       </section>
 
       {/* =========================
@@ -1432,6 +1490,7 @@ function App() {
           </div>
 
         </div>
+
       </section>
 
       {/* =========================
@@ -1484,8 +1543,7 @@ function App() {
                 }
               }}
               style={{
-                cursor:
-                  "pointer",
+                cursor: "pointer",
               }}
             >
               <strong>
@@ -1521,8 +1579,7 @@ function App() {
                 }
               }}
               style={{
-                cursor:
-                  "pointer",
+                cursor: "pointer",
               }}
             >
               <strong>
@@ -1535,8 +1592,7 @@ function App() {
               </span>
 
               <small>
-                Click to manage
-                follow-ups →
+                Admin access required →
               </small>
             </div>
 
@@ -1559,8 +1615,7 @@ function App() {
                 }
               }}
               style={{
-                cursor:
-                  "pointer",
+                cursor: "pointer",
               }}
             >
               <strong>
@@ -1573,17 +1628,18 @@ function App() {
               </span>
 
               <small>
-                Click to view
-                analytics →
+                Admin access required →
               </small>
             </div>
 
           </div>
+
         </div>
 
         <div className="ai-dashboard">
 
           <div className="dashboard-top">
+
             <span>
               ARYANX AI
             </span>
@@ -1591,6 +1647,7 @@ function App() {
             <span className="online">
               ● LIVE
             </span>
+
           </div>
 
           <div className="chat">
@@ -1620,6 +1677,7 @@ function App() {
           </div>
 
         </div>
+
       </section>
 
       {/* =========================
@@ -1705,6 +1763,7 @@ function App() {
           </div>
 
         </div>
+
       </section>
 
       {/* =========================
@@ -1817,1039 +1876,1021 @@ function App() {
           </div>
 
         </div>
+
       </section>
 
       {/* =========================
-          DATABASE / ADMIN PANEL
+          ADMIN DATABASE / DASHBOARD
+          ONLY FOR ADMIN
       ========================= */}
 
-      <section
-        className="backend-section"
-        id="database"
-      >
-
-        <div className="section-heading">
-
-          <span>
-            ARYANX DIGITAL DATABASE
-          </span>
-
-          <h2>
-            Manage Your
-            <br />
-            <em>
-              Business Data.
-            </em>
-          </h2>
-
-          <p>
-            Add, view, update and
-            delete data directly
-            through the AryanX
-            Digital website.
-          </p>
-
-        </div>
-
-        {/* ADD DATA FORM */}
-
-        <div className="backend-form">
-
-          <h3>
-            Add New Record
-          </h3>
-
-          <form
-            onSubmit={addData}
+      {isAdminPage &&
+        isAdminLoggedIn && (
+          <section
+            className="backend-section"
+            id="database"
           >
 
-            <input
-              type="text"
-              placeholder="Enter name"
-              value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
-              disabled={saving}
-            />
+            <div className="section-heading">
 
-            <textarea
-              placeholder="Enter message"
-              value={message}
-              onChange={(e) =>
-                setMessage(
-                  e.target.value
-                )
-              }
-              rows="4"
-              disabled={saving}
-            />
+              <span>
+                ARYANX DIGITAL DATABASE
+              </span>
 
-            <button
-              type="submit"
-              className="primary-btn"
-              disabled={saving}
-            >
-              {saving
-                ? "Saving..."
-                : "Add Data"}
-            </button>
+              <h2>
+                Manage Your
+                <br />
+                <em>
+                  Business Data.
+                </em>
+              </h2>
 
-          </form>
-        </div>
+              <p>
+                Add, view, update and
+                delete data through the
+                AryanX Digital admin
+                dashboard.
+              </p>
 
-        {/* LIVE BACKEND DATA */}
+            </div>
 
-        <div className="section-heading">
+            {/* ADD DATA */}
 
-          <span>
-            LIVE BACKEND DATA
-          </span>
+            <div className="backend-form">
 
-          <h2>
-            AryanX Digital
-            <br />
-            <em>
-              Connected to MongoDB.
-            </em>
-          </h2>
+              <h3>
+                Add New Record
+              </h3>
 
-          <p>
-            This data is coming
-            directly from our
-            Express API and MongoDB
-            Atlas database.
-          </p>
-
-        </div>
-
-        {/* TEST DATA */}
-
-        {loading ? (
-          <p className="backend-loading">
-            Loading data...
-          </p>
-        ) : tests.length === 0 ? (
-          <p className="backend-loading">
-            No data found.
-          </p>
-        ) : (
-          <div className="backend-data-grid">
-
-            {tests.map((test) => (
-
-              <div
-                className="backend-card"
-                key={test._id}
+              <form
+                onSubmit={addData}
               >
 
-                {editingId ===
-                test._id ? (
-                  <>
-                    <span>
-                      EDIT DATABASE
-                      RECORD
-                    </span>
+                <input
+                  type="text"
+                  placeholder="Enter name"
+                  value={name}
+                  onChange={(e) =>
+                    setName(
+                      e.target.value
+                    )
+                  }
+                  disabled={saving}
+                />
 
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) =>
-                        setEditName(
-                          e.target.value
-                        )
-                      }
-                      disabled={
-                        updatingId ===
-                        test._id
-                      }
-                    />
+                <textarea
+                  placeholder="Enter message"
+                  value={message}
+                  onChange={(e) =>
+                    setMessage(
+                      e.target.value
+                    )
+                  }
+                  rows="4"
+                  disabled={saving}
+                />
 
-                    <textarea
-                      value={
-                        editMessage
-                      }
-                      onChange={(e) =>
-                        setEditMessage(
-                          e.target.value
-                        )
-                      }
-                      rows="4"
-                      disabled={
-                        updatingId ===
-                        test._id
-                      }
-                    />
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving..."
+                    : "Add Data"}
+                </button>
 
-                    <div
-                      style={{
-                        display:
-                          "flex",
-                        gap:
-                          "10px",
-                        marginTop:
-                          "15px",
-                        flexWrap:
-                          "wrap",
-                      }}
-                    >
+              </form>
 
-                      <button
-                        type="button"
-                        className="primary-btn"
-                        onClick={() =>
-                          updateData(
+            </div>
+
+            {/* LIVE BACKEND DATA */}
+
+            <div className="section-heading">
+
+              <span>
+                LIVE BACKEND DATA
+              </span>
+
+              <h2>
+                AryanX Digital
+                <br />
+                <em>
+                  Connected to MongoDB.
+                </em>
+              </h2>
+
+              <p>
+                This data is coming
+                directly from our
+                Express API and MongoDB
+                Atlas database.
+              </p>
+
+            </div>
+
+            {loading ? (
+              <p className="backend-loading">
+                Loading data...
+              </p>
+            ) : tests.length === 0 ? (
+              <p className="backend-loading">
+                No data found.
+              </p>
+            ) : (
+              <div className="backend-data-grid">
+
+                {tests.map((test) => (
+
+                  <div
+                    className="backend-card"
+                    key={test._id}
+                  >
+
+                    {editingId ===
+                    test._id ? (
+                      <>
+
+                        <span>
+                          EDIT DATABASE
+                          RECORD
+                        </span>
+
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) =>
+                            setEditName(
+                              e.target.value
+                            )
+                          }
+                          disabled={
+                            updatingId ===
                             test._id
-                          )
-                        }
-                        disabled={
-                          updatingId ===
-                          test._id
-                        }
-                      >
-                        {updatingId ===
-                        test._id
-                          ? "Updating..."
-                          : "Save Changes"}
-                      </button>
+                          }
+                        />
 
-                      <button
-                        type="button"
-                        onClick={
-                          cancelEdit
-                        }
-                        disabled={
-                          updatingId ===
-                          test._id
-                        }
-                        style={{
-                          padding:
-                            "12px 20px",
-                          borderRadius:
-                            "8px",
-                          border:
-                            "1px solid #ccc",
-                          background:
-                            "transparent",
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        Cancel
-                      </button>
-
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      DATABASE RECORD
-                    </span>
-
-                    <h3>
-                      {test.name}
-                    </h3>
-
-                    <p>
-                      {test.message}
-                    </p>
-
-                    <small>
-                      ID: {test._id}
-                    </small>
-
-                    <div
-                      style={{
-                        display:
-                          "flex",
-                        gap:
-                          "10px",
-                        marginTop:
-                          "18px",
-                        flexWrap:
-                          "wrap",
-                      }}
-                    >
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startEdit(
-                            test
-                          )
-                        }
-                        disabled={
-                          deletingId ===
-                            test._id ||
-                          refreshing
-                        }
-                        style={{
-                          padding:
-                            "10px 18px",
-                          borderRadius:
-                            "8px",
-                          border:
-                            "none",
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteData(
+                        <textarea
+                          value={
+                            editMessage
+                          }
+                          onChange={(e) =>
+                            setEditMessage(
+                              e.target.value
+                            )
+                          }
+                          rows="4"
+                          disabled={
+                            updatingId ===
                             test._id
-                          )
-                        }
-                        disabled={
-                          deletingId ===
-                          test._id
-                        }
-                        style={{
-                          padding:
-                            "10px 18px",
-                          borderRadius:
-                            "8px",
-                          border:
-                            "none",
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        {deletingId ===
-                        test._id
-                          ? "Deleting..."
-                          : "Delete"}
-                      </button>
+                          }
+                        />
 
-                    </div>
-                  </>
-                )}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            marginTop: "15px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+
+                          <button
+                            type="button"
+                            className="primary-btn"
+                            onClick={() =>
+                              updateData(
+                                test._id
+                              )
+                            }
+                            disabled={
+                              updatingId ===
+                              test._id
+                            }
+                          >
+                            {updatingId ===
+                            test._id
+                              ? "Updating..."
+                              : "Save Changes"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={
+                              cancelEdit
+                            }
+                            disabled={
+                              updatingId ===
+                              test._id
+                            }
+                            style={{
+                              padding:
+                                "12px 20px",
+                              borderRadius:
+                                "8px",
+                              border:
+                                "1px solid #ccc",
+                              background:
+                                "transparent",
+                              cursor:
+                                "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
+
+                        </div>
+
+                      </>
+                    ) : (
+                      <>
+
+                        <span>
+                          DATABASE RECORD
+                        </span>
+
+                        <h3>
+                          {test.name}
+                        </h3>
+
+                        <p>
+                          {test.message}
+                        </p>
+
+                        <small>
+                          ID: {test._id}
+                        </small>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            marginTop: "18px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              startEdit(
+                                test
+                              )
+                            }
+                            disabled={
+                              deletingId ===
+                                test._id ||
+                              refreshing
+                            }
+                            style={{
+                              padding:
+                                "10px 18px",
+                              borderRadius:
+                                "8px",
+                              border:
+                                "none",
+                              cursor:
+                                "pointer",
+                            }}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              deleteData(
+                                test._id
+                              )
+                            }
+                            disabled={
+                              deletingId ===
+                              test._id
+                            }
+                            style={{
+                              padding:
+                                "10px 18px",
+                              borderRadius:
+                                "8px",
+                              border:
+                                "none",
+                              cursor:
+                                "pointer",
+                            }}
+                          >
+                            {deletingId ===
+                            test._id
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
+
+                        </div>
+
+                      </>
+                    )}
+
+                  </div>
+
+                ))}
+
+              </div>
+            )}
+
+            {/* REFRESH */}
+
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "30px",
+              }}
+            >
+
+              <button
+                type="button"
+                onClick={
+                  handleRefresh
+                }
+                disabled={
+                  loading ||
+                  refreshing
+                }
+                style={{
+                  padding:
+                    "12px 24px",
+                  borderRadius:
+                    "8px",
+                  border:
+                    "1px solid #ccc",
+                  background:
+                    "transparent",
+                  cursor:
+                    loading ||
+                    refreshing
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    loading ||
+                    refreshing
+                      ? 0.6
+                      : 1,
+                }}
+              >
+                {refreshing
+                  ? "Refreshing..."
+                  : "🔄 Refresh Database"}
+              </button>
+
+            </div>
+
+            {/* CUSTOMER ENQUIRIES */}
+
+            <div
+              className="section-heading"
+              id="followup"
+              style={{
+                marginTop: "80px",
+              }}
+            >
+
+              <span>
+                CUSTOMER ENQUIRIES
+              </span>
+
+              <h2>
+                AryanX Digital
+                <br />
+                <em>
+                  Business Leads.
+                </em>
+              </h2>
+
+              <p>
+                All enquiries submitted
+                through the Free Digital
+                Audit form are stored
+                securely in MongoDB.
+              </p>
+
+            </div>
+
+            {/* SMART BUSINESS ANALYTICS */}
+
+            <div
+              id="analytics"
+              style={{
+                scrollMarginTop:
+                  "100px",
+              }}
+            >
+
+              <div
+                className="section-heading"
+                style={{
+                  marginTop: "50px",
+                }}
+              >
+
+                <span>
+                  SMART BUSINESS
+                  ANALYTICS
+                </span>
+
+                <h2>
+                  Understand Your
+                  <br />
+                  <em>
+                    Business Growth.
+                  </em>
+                </h2>
+
+                <p>
+                  Track customer
+                  enquiries, lead
+                  activity, conversion
+                  and business categories
+                  from one dashboard.
+                </p>
 
               </div>
 
-            ))}
-
-          </div>
-        )}
-
-        {/* REFRESH */}
-
-        <div
-          style={{
-            textAlign:
-              "center",
-            marginTop:
-              "30px",
-          }}
-        >
-
-          <button
-            type="button"
-            onClick={
-              handleRefresh
-            }
-            disabled={
-              loading ||
-              refreshing
-            }
-            style={{
-              padding:
-                "12px 24px",
-              borderRadius:
-                "8px",
-              border:
-                "1px solid #ccc",
-              background:
-                "transparent",
-              cursor:
-                loading ||
-                refreshing
-                  ? "not-allowed"
-                  : "pointer",
-              opacity:
-                loading ||
-                refreshing
-                  ? 0.6
-                  : 1,
-            }}
-          >
-            {refreshing
-              ? "Refreshing..."
-              : "🔄 Refresh Database"}
-          </button>
-
-        </div>
-
-        {/* =========================
-            CUSTOMER ENQUIRIES
-        ========================= */}
-
-        <div
-          className="section-heading"
-          id="followup"
-          style={{
-            marginTop:
-              "80px",
-          }}
-        >
-
-          <span>
-            CUSTOMER ENQUIRIES
-          </span>
-
-          <h2>
-            AryanX Digital
-            <br />
-            <em>
-              Business Leads.
-            </em>
-          </h2>
-
-          <p>
-            All enquiries submitted
-            through the Free Digital
-            Audit form are stored
-            securely in MongoDB.
-          </p>
-
-        </div>
-
-        {/* =========================
-            SMART BUSINESS ANALYTICS
-        ========================= */}
-
-        <div
-          id="analytics"
-          style={{
-            scrollMarginTop:
-              "100px",
-          }}
-        >
-
-          <div
-            className="section-heading"
-            style={{
-              marginTop:
-                "50px",
-            }}
-          >
-
-            <span>
-              SMART BUSINESS
-              ANALYTICS
-            </span>
-
-            <h2>
-              Understand Your
-              <br />
-              <em>
-                Business Growth.
-              </em>
-            </h2>
-
-            <p>
-              Track customer
-              enquiries, lead
-              activity, conversion
-              and business categories
-              from one dashboard.
-            </p>
-
-          </div>
-
-          {/* MAIN ANALYTICS */}
-
-          <div
-            style={{
-              display:
-                "grid",
-              gridTemplateColumns:
-                "repeat(3, minmax(0, 1fr))",
-              gap:
-                "20px",
-              margin:
-                "40px 0",
-            }}
-          >
-
-            <div className="backend-card">
-              <span>
-                TOTAL LEADS
-              </span>
-
-              <h2>
-                {totalLeads}
-              </h2>
-
-              <p>
-                All customer
-                enquiries
-              </p>
-            </div>
-
-            <div className="backend-card">
-              <span>
-                NEW LEADS
-              </span>
-
-              <h2>
-                {newLeads}
-              </h2>
-
-              <p>
-                Pending enquiries
-              </p>
-            </div>
-
-            <div className="backend-card">
-              <span>
-                BUSINESS TYPES
-              </span>
-
-              <h2>
-                {businessTypes}
-              </h2>
-
-              <p>
-                Different business
-                categories
-              </p>
-            </div>
-
-          </div>
-
-          {/* STATUS ANALYTICS */}
-
-          <div
-            style={{
-              display:
-                "grid",
-              gridTemplateColumns:
-                "repeat(4, minmax(0, 1fr))",
-              gap:
-                "20px",
-              margin:
-                "20px 0 40px",
-            }}
-          >
-
-            <div className="backend-card">
-              <span>
-                CONTACTED LEADS
-              </span>
-
-              <h2>
-                {contactedLeads}
-              </h2>
-
-              <p>
-                Leads already
-                contacted
-              </p>
-            </div>
-
-            <div className="backend-card">
-              <span>
-                CONVERTED LEADS
-              </span>
-
-              <h2>
-                {convertedLeads}
-              </h2>
-
-              <p>
-                Successfully
-                converted leads
-              </p>
-            </div>
-
-            <div className="backend-card">
-              <span>
-                CLOSED LEADS
-              </span>
-
-              <h2>
-                {closedLeads}
-              </h2>
-
-              <p>
-                Closed customer
-                enquiries
-              </p>
-            </div>
-
-            <div className="backend-card">
-              <span>
-                CONVERSION RATE
-              </span>
-
-              <h2>
-                {conversionRate}%
-              </h2>
-
-              <p>
-                Lead conversion
-                performance
-              </p>
-            </div>
-
-          </div>
-
-          {/* EXTRA ANALYTICS */}
-
-          <div
-            style={{
-              display:
-                "grid",
-              gridTemplateColumns:
-                "repeat(2, minmax(0, 1fr))",
-              gap:
-                "20px",
-              marginBottom:
-                "50px",
-            }}
-          >
-
-            <div className="backend-card">
-              <span>
-                CONTACT RATE
-              </span>
-
-              <h2>
-                {contactRate}%
-              </h2>
-
-              <p>
-                Percentage of leads
-                contacted
-              </p>
-            </div>
-
-            <div className="backend-card">
-              <span>
-                FOLLOW-UP READY
-              </span>
-
-              <h2>
-                {newLeads}
-              </h2>
-
-              <p>
-                New leads ready for
-                follow-up
-              </p>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* =========================
-            LEAD SEARCH & FILTER
-        ========================= */}
-
-        <div
-          style={{
-            maxWidth:
-              "600px",
-            margin:
-              "0 auto 30px",
-          }}
-        >
-
-          <input
-            type="text"
-            placeholder="🔍 Search business, name, phone or email..."
-            value={leadSearch}
-            onChange={(e) =>
-              setLeadSearch(
-                e.target.value
-              )
-            }
-            style={{
-              width:
-                "100%",
-              padding:
-                "14px 18px",
-              borderRadius:
-                "10px",
-              border:
-                "1px solid #ccc",
-              fontSize:
-                "15px",
-              boxSizing:
-                "border-box",
-              outline:
-                "none",
-            }}
-          />
-
-          <select
-            value={
-              leadTypeFilter
-            }
-            onChange={(e) =>
-              setLeadTypeFilter(
-                e.target.value
-              )
-            }
-            style={{
-              width:
-                "100%",
-              padding:
-                "14px 18px",
-              borderRadius:
-                "10px",
-              border:
-                "1px solid #ccc",
-              fontSize:
-                "15px",
-              marginTop:
-                "12px",
-              outline:
-                "none",
-            }}
-          >
-
-            <option value="All">
-              All Business Types
-            </option>
-
-            {[
-              ...new Set(
-                leads
-                  .map(
-                    (lead) =>
-                      lead.type
-                  )
-                  .filter(
-                    Boolean
-                  )
-              ),
-            ].map(
-              (type) => (
-
-                <option
-                  key={type}
-                  value={type}
-                >
-                  {type}
-                </option>
-
-              )
-            )}
-
-          </select>
-
-          <button
-            type="button"
-            onClick={
-              clearLeadFilters
-            }
-            style={{
-              marginTop:
-                "12px",
-              padding:
-                "10px 18px",
-              borderRadius:
-                "8px",
-              border:
-                "none",
-              cursor:
-                "pointer",
-              fontSize:
-                "14px",
-            }}
-          >
-            ✕ Clear Filters
-          </button>
-
-        </div>
-
-        {/* =========================
-            CUSTOMER LEADS
-        ========================= */}
-
-        {leadsLoading ? (
-          <p className="backend-loading">
-            Loading customer
-            enquiries...
-          </p>
-        ) : filteredLeads.length ===
-          0 ? (
-          <p className="backend-loading">
-            No matching customer
-            enquiry found.
-          </p>
-        ) : (
-          <div className="backend-data-grid">
-
-            {filteredLeads.map(
-              (lead) => (
-
-                <div
-                  className="backend-card"
-                  key={lead._id}
-                >
+              {/* MAIN ANALYTICS */}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(3, minmax(0, 1fr))",
+                  gap: "20px",
+                  margin: "40px 0",
+                }}
+              >
+
+                <div className="backend-card">
 
                   <span>
-                    CUSTOMER ENQUIRY
+                    TOTAL LEADS
                   </span>
 
-                  <h3>
-                    {lead.business}
-                  </h3>
+                  <h2>
+                    {totalLeads}
+                  </h2>
 
                   <p>
-                    <strong>
-                      Customer:
-                    </strong>{" "}
-                    {lead.name}
+                    All customer
+                    enquiries
                   </p>
-
-                  <p>
-                    <strong>
-                      Phone:
-                    </strong>{" "}
-                    {lead.phone}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Email:
-                    </strong>{" "}
-                    {lead.email}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Business Type:
-                    </strong>{" "}
-                    {lead.type}
-                  </p>
-
-                  {/* LEAD STATUS */}
-
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-
-                    <strong>
-                      Lead Status:
-                    </strong>
-
-                    <select
-                      value={
-                        lead.status ||
-                        "New"
-                      }
-                      onChange={(e) =>
-                        updateLeadStatus(
-                          lead._id,
-                          e.target.value
-                        )
-                      }
-                      disabled={
-                        updatingId ===
-                        lead._id
-                      }
-                      style={{
-                        width:
-                          "100%",
-                        padding:
-                          "10px 12px",
-                        marginTop:
-                          "8px",
-                        borderRadius:
-                          "8px",
-                        border:
-                          "1px solid #ccc",
-                        fontSize:
-                          "14px",
-                        cursor:
-                          updatingId ===
-                          lead._id
-                            ? "not-allowed"
-                            : "pointer",
-                        outline:
-                          "none",
-                      }}
-                    >
-
-                      <option value="New">
-                        New
-                      </option>
-
-                      <option value="Contacted">
-                        Contacted
-                      </option>
-
-                      <option value="Converted">
-                        Converted
-                      </option>
-
-                      <option value="Closed">
-                        Closed
-                      </option>
-
-                    </select>
-
-                  </div>
-
-                  <small>
-                    Created At:{" "}
-                    {lead.createdAt
-                      ? new Date(
-                          lead.createdAt
-                        ).toLocaleString()
-                      : "N/A"}
-                  </small>
-
-                  {/* LEAD ACTIONS */}
-
-                  <div
-                    style={{
-                      display:
-                        "flex",
-                      gap:
-                        "10px",
-                      marginTop:
-                        "18px",
-                      flexWrap:
-                        "wrap",
-                    }}
-                  >
-
-                    {/* AUTOMATED FOLLOW-UP */}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        sendLeadFollowUp(
-                          lead
-                        )
-                      }
-                      style={{
-                        padding:
-                          "10px 18px",
-                        borderRadius:
-                          "8px",
-                        border:
-                          "none",
-                        cursor:
-                          "pointer",
-                        fontWeight:
-                          "600",
-                      }}
-                    >
-                      📲 Follow-up
-                    </button>
-
-                    {/* WHATSAPP */}
-
-                    <button
-                      type="button"
-                      onClick={() => {
-
-                        const cleanPhone =
-                          String(
-                            lead.phone ||
-                              ""
-                          ).replace(
-                            /\D/g,
-                            ""
-                          );
-
-                        const whatsappNumber =
-                          cleanPhone.length ===
-                          10
-                            ? "91" +
-                              cleanPhone
-                            : cleanPhone;
-
-                        const message =
-                          "Hello " +
-                          (lead.name ||
-                            "there") +
-                          ", this is AryanX Digital. How can we help your business grow?";
-
-                        window.open(
-                          "https://wa.me/" +
-                            whatsappNumber +
-                            "?text=" +
-                            encodeURIComponent(
-                              message
-                            ),
-                          "_blank"
-                        );
-                      }}
-                      style={{
-                        padding:
-                          "10px 18px",
-                        borderRadius:
-                          "8px",
-                        border:
-                          "none",
-                        cursor:
-                          "pointer",
-                      }}
-                    >
-                      💬 WhatsApp
-                    </button>
-
-                    {/* DELETE */}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        deleteLead(
-                          lead._id
-                        )
-                      }
-                      disabled={
-                        deletingLeadId ===
-                        lead._id
-                      }
-                      style={{
-                        padding:
-                          "10px 18px",
-                        borderRadius:
-                          "8px",
-                        border:
-                          "none",
-                        cursor:
-                          deletingLeadId ===
-                          lead._id
-                            ? "not-allowed"
-                            : "pointer",
-                      }}
-                    >
-                      {deletingLeadId ===
-                      lead._id
-                        ? "Deleting..."
-                        : "🗑️ Delete"}
-                    </button>
-
-                  </div>
 
                 </div>
 
-              )
+                <div className="backend-card">
+
+                  <span>
+                    NEW LEADS
+                  </span>
+
+                  <h2>
+                    {newLeads}
+                  </h2>
+
+                  <p>
+                    Pending enquiries
+                  </p>
+
+                </div>
+
+                <div className="backend-card">
+
+                  <span>
+                    BUSINESS TYPES
+                  </span>
+
+                  <h2>
+                    {businessTypes}
+                  </h2>
+
+                  <p>
+                    Different business
+                    categories
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* STATUS ANALYTICS */}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(4, minmax(0, 1fr))",
+                  gap: "20px",
+                  margin:
+                    "20px 0 40px",
+                }}
+              >
+
+                <div className="backend-card">
+
+                  <span>
+                    CONTACTED LEADS
+                  </span>
+
+                  <h2>
+                    {contactedLeads}
+                  </h2>
+
+                  <p>
+                    Leads already
+                    contacted
+                  </p>
+
+                </div>
+
+                <div className="backend-card">
+
+                  <span>
+                    CONVERTED LEADS
+                  </span>
+
+                  <h2>
+                    {convertedLeads}
+                  </h2>
+
+                  <p>
+                    Successfully
+                    converted leads
+                  </p>
+
+                </div>
+
+                <div className="backend-card">
+
+                  <span>
+                    CLOSED LEADS
+                  </span>
+
+                  <h2>
+                    {closedLeads}
+                  </h2>
+
+                  <p>
+                    Closed customer
+                    enquiries
+                  </p>
+
+                </div>
+
+                <div className="backend-card">
+
+                  <span>
+                    CONVERSION RATE
+                  </span>
+
+                  <h2>
+                    {conversionRate}%
+                  </h2>
+
+                  <p>
+                    Lead conversion
+                    performance
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* EXTRA ANALYTICS */}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(2, minmax(0, 1fr))",
+                  gap: "20px",
+                  marginBottom:
+                    "50px",
+                }}
+              >
+
+                <div className="backend-card">
+
+                  <span>
+                    CONTACT RATE
+                  </span>
+
+                  <h2>
+                    {contactRate}%
+                  </h2>
+
+                  <p>
+                    Percentage of leads
+                    contacted
+                  </p>
+
+                </div>
+
+                <div className="backend-card">
+
+                  <span>
+                    FOLLOW-UP READY
+                  </span>
+
+                  <h2>
+                    {newLeads}
+                  </h2>
+
+                  <p>
+                    New leads ready for
+                    follow-up
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* LEAD SEARCH */}
+
+            <div
+              style={{
+                maxWidth: "600px",
+                margin:
+                  "0 auto 30px",
+              }}
+            >
+
+              <input
+                type="text"
+                placeholder="🔍 Search business, name, phone or email..."
+                value={leadSearch}
+                onChange={(e) =>
+                  setLeadSearch(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding:
+                    "14px 18px",
+                  borderRadius:
+                    "10px",
+                  border:
+                    "1px solid #ccc",
+                  fontSize: "15px",
+                  boxSizing:
+                    "border-box",
+                  outline: "none",
+                }}
+              />
+
+              <select
+                value={
+                  leadTypeFilter
+                }
+                onChange={(e) =>
+                  setLeadTypeFilter(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding:
+                    "14px 18px",
+                  borderRadius:
+                    "10px",
+                  border:
+                    "1px solid #ccc",
+                  fontSize: "15px",
+                  marginTop: "12px",
+                  outline: "none",
+                }}
+              >
+
+                <option value="All">
+                  All Business Types
+                </option>
+
+                {[
+                  ...new Set(
+                    leads
+                      .map(
+                        (lead) =>
+                          lead.type
+                      )
+                      .filter(Boolean)
+                  ),
+                ].map(
+                  (type) => (
+                    <option
+                      key={type}
+                      value={type}
+                    >
+                      {type}
+                    </option>
+                  )
+                )}
+
+              </select>
+
+              <button
+                type="button"
+                onClick={
+                  clearLeadFilters
+                }
+                style={{
+                  marginTop:
+                    "12px",
+                  padding:
+                    "10px 18px",
+                  borderRadius:
+                    "8px",
+                  border:
+                    "none",
+                  cursor:
+                    "pointer",
+                  fontSize:
+                    "14px",
+                }}
+              >
+                ✕ Clear Filters
+              </button>
+
+            </div>
+
+            {/* CUSTOMER LEADS */}
+
+            {leadsLoading ? (
+              <p className="backend-loading">
+                Loading customer
+                enquiries...
+              </p>
+            ) : filteredLeads.length ===
+              0 ? (
+              <p className="backend-loading">
+                No matching customer
+                enquiry found.
+              </p>
+            ) : (
+              <div className="backend-data-grid">
+
+                {filteredLeads.map(
+                  (lead) => (
+
+                    <div
+                      className="backend-card"
+                      key={lead._id}
+                    >
+
+                      <span>
+                        CUSTOMER ENQUIRY
+                      </span>
+
+                      <h3>
+                        {lead.business}
+                      </h3>
+
+                      <p>
+                        <strong>
+                          Customer:
+                        </strong>{" "}
+                        {lead.name}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Phone:
+                        </strong>{" "}
+                        {lead.phone}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Email:
+                        </strong>{" "}
+                        {lead.email}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Business Type:
+                        </strong>{" "}
+                        {lead.type}
+                      </p>
+
+                      {/* LEAD STATUS */}
+
+                      <div
+                        style={{
+                          marginTop:
+                            "15px",
+                        }}
+                      >
+
+                        <strong>
+                          Lead Status:
+                        </strong>
+
+                        <select
+                          value={
+                            lead.status ||
+                            "New"
+                          }
+                          onChange={(e) =>
+                            updateLeadStatus(
+                              lead._id,
+                              e.target.value
+                            )
+                          }
+                          disabled={
+                            updatingId ===
+                            lead._id
+                          }
+                          style={{
+                            width:
+                              "100%",
+                            padding:
+                              "10px 12px",
+                            marginTop:
+                              "8px",
+                            borderRadius:
+                              "8px",
+                            border:
+                              "1px solid #ccc",
+                            fontSize:
+                              "14px",
+                            cursor:
+                              updatingId ===
+                              lead._id
+                                ? "not-allowed"
+                                : "pointer",
+                            outline:
+                              "none",
+                          }}
+                        >
+
+                          <option value="New">
+                            New
+                          </option>
+
+                          <option value="Contacted">
+                            Contacted
+                          </option>
+
+                          <option value="Converted">
+                            Converted
+                          </option>
+
+                          <option value="Closed">
+                            Closed
+                          </option>
+
+                        </select>
+
+                      </div>
+
+                      <small>
+                        Created At:{" "}
+                        {lead.createdAt
+                          ? new Date(
+                              lead.createdAt
+                            ).toLocaleString()
+                          : "N/A"}
+                      </small>
+
+                      {/* LEAD ACTIONS */}
+
+                      <div
+                        style={{
+                          display:
+                            "flex",
+                          gap:
+                            "10px",
+                          marginTop:
+                            "18px",
+                          flexWrap:
+                            "wrap",
+                        }}
+                      >
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            sendLeadFollowUp(
+                              lead
+                            )
+                          }
+                          style={{
+                            padding:
+                              "10px 18px",
+                            borderRadius:
+                              "8px",
+                            border:
+                              "none",
+                            cursor:
+                              "pointer",
+                            fontWeight:
+                              "600",
+                          }}
+                        >
+                          📲 Follow-up
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+
+                            const cleanPhone =
+                              String(
+                                lead.phone ||
+                                  ""
+                              ).replace(
+                                /\D/g,
+                                ""
+                              );
+
+                            const whatsappNumber =
+                              cleanPhone.length ===
+                              10
+                                ? "91" +
+                                  cleanPhone
+                                : cleanPhone;
+
+                            const message =
+                              "Hello " +
+                              (lead.name ||
+                                "there") +
+                              ", this is AryanX Digital. How can we help your business grow?";
+
+                            window.open(
+                              "https://wa.me/" +
+                                whatsappNumber +
+                                "?text=" +
+                                encodeURIComponent(
+                                  message
+                                ),
+                              "_blank"
+                            );
+
+                          }}
+                          style={{
+                            padding:
+                              "10px 18px",
+                            borderRadius:
+                              "8px",
+                            border:
+                              "none",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          💬 WhatsApp
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteLead(
+                              lead._id
+                            )
+                          }
+                          disabled={
+                            deletingLeadId ===
+                            lead._id
+                          }
+                          style={{
+                            padding:
+                              "10px 18px",
+                            borderRadius:
+                              "8px",
+                            border:
+                              "none",
+                            cursor:
+                              deletingLeadId ===
+                              lead._id
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          {deletingLeadId ===
+                          lead._id
+                            ? "Deleting..."
+                            : "🗑️ Delete"}
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
             )}
 
-          </div>
+          </section>
         )}
-
-      </section>
 
       {/* =========================
           CONTACT / CTA
@@ -2958,6 +2999,7 @@ function App() {
               }
 
               if (
+                isAdminPage &&
                 isAdminLoggedIn
               ) {
 
@@ -3108,13 +3150,17 @@ function App() {
       <footer>
 
         <div className="footer-logo">
+
           ARYAN
+
           <span>
             X
           </span>
+
           <small>
             DIGITAL
           </small>
+
         </div>
 
         <p>
@@ -3136,9 +3182,12 @@ function App() {
             AI Solutions
           </a>
 
-          <a href="#database">
-            Database
-          </a>
+          {isAdminPage &&
+            isAdminLoggedIn && (
+              <a href="#database">
+                Database
+              </a>
+            )}
 
           <a href="#contact">
             Contact
@@ -3173,34 +3222,25 @@ function App() {
             (prev) => !prev
           )
         }
-        aria-label="Open AryanX AI Chat"
+        aria-label={
+          isChatOpen
+            ? "Close AryanX AI Chat"
+            : "Open AryanX AI Chat"
+        }
         style={{
-          position:
-            "fixed",
-          right:
-            "25px",
-          bottom:
-            "25px",
-          width:
-            "60px",
-          height:
-            "60px",
-          borderRadius:
-            "50%",
-          border:
-            "none",
-          background:
-            "#2563eb",
-          color:
-            "#ffffff",
-          fontSize:
-            "26px",
-          fontWeight:
-            "700",
-          cursor:
-            "pointer",
-          zIndex:
-            999999,
+          position: "fixed",
+          right: "25px",
+          bottom: "25px",
+          width: "60px",
+          height: "60px",
+          borderRadius: "50%",
+          border: "none",
+          background: "#2563eb",
+          color: "#ffffff",
+          fontSize: "26px",
+          fontWeight: "700",
+          cursor: "pointer",
+          zIndex: 999999,
           boxShadow:
             "0 10px 30px rgba(0,0,0,0.4)",
         }}
@@ -3214,32 +3254,22 @@ function App() {
         <div
           id="ai-chat-window"
           style={{
-            position:
-              "fixed",
-            right:
-              "25px",
-            bottom:
-              "100px",
-            width:
-              "360px",
+            position: "fixed",
+            right: "25px",
+            bottom: "100px",
+            width: "360px",
             maxWidth:
               "calc(100vw - 40px)",
-            height:
-              "500px",
-            background:
-              "#080d1d",
+            height: "500px",
+            background: "#080d1d",
             border:
               "1px solid #2563eb",
-            borderRadius:
-              "18px",
-            padding:
-              "18px",
-            zIndex:
-              999998,
+            borderRadius: "18px",
+            padding: "18px",
+            zIndex: 999998,
             boxShadow:
               "0 20px 60px rgba(0,0,0,0.6)",
-            display:
-              "flex",
+            display: "flex",
             flexDirection:
               "column",
             boxSizing:
@@ -3251,14 +3281,11 @@ function App() {
 
           <div
             style={{
-              display:
-                "flex",
+              display: "flex",
               justifyContent:
                 "space-between",
-              alignItems:
-                "center",
-              paddingBottom:
-                "14px",
+              alignItems: "center",
+              paddingBottom: "14px",
               borderBottom:
                 "1px solid rgba(255,255,255,0.1)",
             }}
@@ -3268,12 +3295,9 @@ function App() {
 
               <strong
                 style={{
-                  display:
-                    "block",
-                  color:
-                    "#ffffff",
-                  fontSize:
-                    "15px",
+                  display: "block",
+                  color: "#ffffff",
+                  fontSize: "15px",
                 }}
               >
                 ✦ ARYANX AI
@@ -3281,10 +3305,8 @@ function App() {
 
               <span
                 style={{
-                  color:
-                    "#22c55e",
-                  fontSize:
-                    "11px",
+                  color: "#22c55e",
+                  fontSize: "11px",
                 }}
               >
                 ● Online
@@ -3298,17 +3320,14 @@ function App() {
                 clearAIChat
               }
               title="Clear chat"
+              aria-label="Clear chat"
               style={{
-                border:
-                  "none",
+                border: "none",
                 background:
                   "transparent",
-                color:
-                  "#94a3b8",
-                fontSize:
-                  "20px",
-                cursor:
-                  "pointer",
+                color: "#94a3b8",
+                fontSize: "20px",
+                cursor: "pointer",
               }}
             >
               ↻
@@ -3320,12 +3339,9 @@ function App() {
 
           <div
             style={{
-              flex:
-                1,
-              overflowY:
-                "auto",
-              padding:
-                "15px 2px",
+              flex: 1,
+              overflowY: "auto",
+              padding: "15px 2px",
             }}
           >
 
@@ -3336,9 +3352,7 @@ function App() {
               ) => (
 
                 <div
-                  key={
-                    index
-                  }
+                  key={index}
                   style={{
                     maxWidth:
                       "82%",
@@ -3371,9 +3385,7 @@ function App() {
                       "break-word",
                   }}
                 >
-                  {
-                    chat.text
-                  }
+                  {chat.text}
                 </div>
 
               )
@@ -3410,12 +3422,9 @@ function App() {
               sendAIMessage
             }
             style={{
-              display:
-                "flex",
-              gap:
-                "8px",
-              paddingTop:
-                "12px",
+              display: "flex",
+              gap: "8px",
+              paddingTop: "12px",
               borderTop:
                 "1px solid rgba(255,255,255,0.1)",
             }}
@@ -3436,22 +3445,15 @@ function App() {
                 chatLoading
               }
               style={{
-                flex:
-                  1,
-                minWidth:
-                  0,
-                padding:
-                  "12px",
-                borderRadius:
-                  "9px",
+                flex: 1,
+                minWidth: 0,
+                padding: "12px",
+                borderRadius: "9px",
                 border:
                   "1px solid rgba(255,255,255,0.15)",
-                background:
-                  "#0f172a",
-                color:
-                  "#ffffff",
-                outline:
-                  "none",
+                background: "#0f172a",
+                color: "#ffffff",
+                outline: "none",
                 boxSizing:
                   "border-box",
               }}
@@ -3464,16 +3466,12 @@ function App() {
                 !chatMessage.trim()
               }
               style={{
-                width:
-                  "45px",
-                border:
-                  "none",
-                borderRadius:
-                  "9px",
+                width: "45px",
+                border: "none",
+                borderRadius: "9px",
                 background:
                   "#2563eb",
-                color:
-                  "#ffffff",
+                color: "#ffffff",
                 cursor:
                   chatLoading ||
                   !chatMessage.trim()
@@ -3484,8 +3482,7 @@ function App() {
                   !chatMessage.trim()
                     ? 0.5
                     : 1,
-                fontSize:
-                  "16px",
+                fontSize: "16px",
               }}
             >
               ➤
@@ -3501,3 +3498,4 @@ function App() {
 }
 
 export default App;
+
