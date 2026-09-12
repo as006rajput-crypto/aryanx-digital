@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
 import "./App.css";
 import AdminLogin from "./AdminLogin";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
+const API_URL =
+  "https://aryanx-digital-backend.onrender.com";
 
 const API = (endpoint) => {
   return API_URL + endpoint;
@@ -53,6 +53,7 @@ function App() {
   const [leadSearch, setLeadSearch] = useState("");
   const [leadTypeFilter, setLeadTypeFilter] = useState("All");
   const [deletingLeadId, setDeletingLeadId] = useState(null);
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
 
   // =========================
   // TOAST
@@ -131,7 +132,25 @@ function App() {
   };
 
   // =========================
-  // SCROLL TO CONTACT / AUDIT
+  // HANDLE UNAUTHORIZED
+  // =========================
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminEmail");
+
+    setIsAdminLoggedIn(false);
+    setLeads([]);
+    setTests([]);
+
+    showToast(
+      "Session expired. Please login again.",
+      "error"
+    );
+  };
+
+  // =========================
+  // SCROLL TO CONTACT
   // =========================
 
   const scrollToContact = () => {
@@ -189,6 +208,7 @@ function App() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify({
             message: trimmedMessage,
@@ -344,30 +364,43 @@ function App() {
       setLoading(true);
 
       const response = await fetch(
-        API("/api/tests")
+        API("/api/tests"),
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
       );
-
-      if (!response.ok) {
-        throw new Error("Server error");
-      }
 
       const result = await response.json();
 
-      if (result.success) {
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Unable to load database."
+        );
+      }
+
+      if (
+        result.success &&
+        Array.isArray(result.data)
+      ) {
         setTests(result.data);
       } else {
         setTests([]);
       }
     } catch (error) {
       console.error(
-        "API Error:",
+        "Database API Error:",
         error
       );
 
       setTests([]);
 
       showToast(
-        "Unable to connect to server.",
+        error.message ||
+          "Unable to connect to backend.",
         "error"
       );
     } finally {
@@ -386,7 +419,9 @@ function App() {
     }
 
     const token =
-      localStorage.getItem("adminToken");
+      localStorage.getItem(
+        "adminToken"
+      );
 
     if (!token) {
       setLeads([]);
@@ -399,9 +434,11 @@ function App() {
       const response = await fetch(
         API("/api/leads"),
         {
+          method: "GET",
           headers: {
             Authorization:
               "Bearer " + token,
+            Accept: "application/json",
           },
         }
       );
@@ -410,24 +447,21 @@ function App() {
         await response.json();
 
       if (response.status === 401) {
-        handleLogout();
-
-        showToast(
-          "Session expired. Please login again.",
-          "error"
-        );
-
+        handleUnauthorized();
         return;
       }
 
       if (!response.ok) {
         throw new Error(
           result.message ||
-            "Failed to load leads"
+            "Failed to load customer enquiries."
         );
       }
 
-      if (result.success) {
+      if (
+        result.success &&
+        Array.isArray(result.data)
+      ) {
         setLeads(result.data);
       } else {
         setLeads([]);
@@ -441,13 +475,31 @@ function App() {
       setLeads([]);
 
       showToast(
-        "Unable to load leads.",
+        error.message ||
+          "Unable to load customer enquiries.",
         "error"
       );
     } finally {
       setLeadsLoading(false);
     }
   };
+
+  // =========================
+  // LOAD ADMIN DATA AFTER LOGIN
+  // =========================
+
+  useEffect(() => {
+    if (
+      isAdminPage &&
+      isAdminLoggedIn
+    ) {
+      loadData();
+      loadLeads();
+    }
+  }, [
+    isAdminPage,
+    isAdminLoggedIn,
+  ]);
 
   // =========================
   // REFRESH DATA
@@ -515,16 +567,24 @@ function App() {
             headers: {
               "Content-Type":
                 "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify({
-              name,
-              message,
+              name: name.trim(),
+              message: message.trim(),
             }),
           }
         );
 
       const result =
         await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Failed to add data."
+        );
+      }
 
       if (result.success) {
         setTests((prev) => [
@@ -553,7 +613,8 @@ function App() {
       );
 
       showToast(
-        "Backend connection failed.",
+        error.message ||
+          "Backend connection failed.",
         "error"
       );
     } finally {
@@ -583,11 +644,21 @@ function App() {
           API("/api/test/" + id),
           {
             method: "DELETE",
+            headers: {
+              Accept: "application/json",
+            },
           }
         );
 
       const result =
         await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Failed to delete data."
+        );
+      }
 
       if (result.success) {
         setTests((prev) =>
@@ -615,7 +686,8 @@ function App() {
       );
 
       showToast(
-        "Backend connection failed.",
+        error.message ||
+          "Backend connection failed.",
         "error"
       );
     } finally {
@@ -629,8 +701,8 @@ function App() {
 
   const startEdit = (test) => {
     setEditingId(test._id);
-    setEditName(test.name);
-    setEditMessage(test.message);
+    setEditName(test.name || "");
+    setEditMessage(test.message || "");
   };
 
   // =========================
@@ -671,16 +743,25 @@ function App() {
             headers: {
               "Content-Type":
                 "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify({
-              name: editName,
-              message: editMessage,
+              name: editName.trim(),
+              message:
+                editMessage.trim(),
             }),
           }
         );
 
       const result =
         await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            "Failed to update data."
+        );
+      }
 
       if (result.success) {
         setTests((prev) =>
@@ -711,7 +792,8 @@ function App() {
       );
 
       showToast(
-        "Backend connection failed.",
+        error.message ||
+          "Backend connection failed.",
         "error"
       );
     } finally {
@@ -733,7 +815,7 @@ function App() {
       );
 
     if (!token) {
-      handleLogout();
+      handleUnauthorized();
       return;
     }
 
@@ -754,6 +836,7 @@ function App() {
                 "application/json",
               Authorization:
                 "Bearer " + token,
+              Accept: "application/json",
             },
             body: JSON.stringify({
               status,
@@ -765,20 +848,14 @@ function App() {
         await response.json();
 
       if (response.status === 401) {
-        handleLogout();
-
-        showToast(
-          "Session expired. Please login again.",
-          "error"
-        );
-
+        handleUnauthorized();
         return;
       }
 
       if (!response.ok) {
         throw new Error(
           result.message ||
-            "Failed to update status"
+            "Failed to update status."
         );
       }
 
@@ -805,7 +882,8 @@ function App() {
       );
 
       showToast(
-        "Failed to update lead status.",
+        error.message ||
+          "Failed to update lead status.",
         "error"
       );
     } finally {
@@ -835,7 +913,7 @@ function App() {
       );
 
     if (!token) {
-      handleLogout();
+      handleUnauthorized();
       return;
     }
 
@@ -853,6 +931,7 @@ function App() {
             headers: {
               Authorization:
                 "Bearer " + token,
+              Accept: "application/json",
             },
           }
         );
@@ -861,24 +940,15 @@ function App() {
         await response.json();
 
       if (response.status === 401) {
-        handleLogout();
-
-        showToast(
-          "Session expired. Please login again.",
-          "error"
-        );
-
+        handleUnauthorized();
         return;
       }
 
       if (!response.ok) {
-        showToast(
+        throw new Error(
           result.message ||
-            "Failed to delete lead.",
-          "error"
+            "Failed to delete lead."
         );
-
-        return;
       }
 
       setLeads((prevLeads) =>
@@ -899,7 +969,8 @@ function App() {
       );
 
       showToast(
-        "Server error. Please try again.",
+        error.message ||
+          "Server error. Please try again.",
         "error"
       );
     } finally {
@@ -987,9 +1058,7 @@ function App() {
     setLeads([]);
     setTests([]);
 
-    if (window.location.pathname !== "/") {
-      window.location.href = "/";
-    }
+    window.location.href = "/";
   };
 
   // =========================
@@ -998,26 +1067,7 @@ function App() {
 
   const handleAdminLogin = () => {
     setIsAdminLoggedIn(true);
-    loadLeads();
-    loadData();
   };
-
-  // =========================
-  // LOAD ADMIN DATA
-  // =========================
-
-  useEffect(() => {
-    if (
-      isAdminPage &&
-      isAdminLoggedIn
-    ) {
-      loadData();
-      loadLeads();
-    }
-  }, [
-    isAdminPage,
-    isAdminLoggedIn,
-  ]);
 
   // =========================
   // FILTERED LEADS
@@ -1031,6 +1081,7 @@ function App() {
           .trim();
 
       const matchesSearch =
+        !search ||
         lead.business
           ?.toLowerCase()
           .includes(search) ||
@@ -1083,7 +1134,7 @@ function App() {
   }
 
   // =========================
-  // MAIN PUBLIC WEBSITE
+  // MAIN WEBSITE
   // =========================
 
   return (
@@ -1248,11 +1299,11 @@ function App() {
           <div className="hero-buttons">
 
             <a
-  href="#contact"
-  className="primary-btn"
->
-  Get Free Digital Audit →
-</a>
+              href="#contact"
+              className="primary-btn"
+            >
+              Get Free Digital Audit →
+            </a>
 
             <a
               href="#services"
@@ -1895,8 +1946,7 @@ function App() {
       </section>
 
       {/* =========================
-          ADMIN DATABASE / DASHBOARD
-          ONLY FOR ADMIN
+          ADMIN DATABASE
       ========================= */}
 
       {isAdminPage &&
@@ -2257,13 +2307,16 @@ function App() {
 
             </div>
 
-            {/* CUSTOMER ENQUIRIES */}
+            {/* =========================
+                CUSTOMER ENQUIRIES
+            ========================= */}
 
             <div
               className="section-heading"
               id="followup"
               style={{
                 marginTop: "80px",
+                scrollMarginTop: "100px",
               }}
             >
 
@@ -2288,7 +2341,9 @@ function App() {
 
             </div>
 
-            {/* SMART BUSINESS ANALYTICS */}
+            {/* =========================
+                SMART BUSINESS ANALYTICS
+            ========================= */}
 
             <div
               id="analytics"
@@ -2526,7 +2581,9 @@ function App() {
 
             </div>
 
-            {/* LEAD SEARCH */}
+            {/* =========================
+                LEAD SEARCH
+            ========================= */}
 
             <div
               style={{
@@ -2634,7 +2691,9 @@ function App() {
 
             </div>
 
-            {/* CUSTOMER LEADS */}
+            {/* =========================
+                CUSTOMER LEADS
+            ========================= */}
 
             {leadsLoading ? (
               <p className="backend-loading">
@@ -2914,6 +2973,9 @@ function App() {
       <section
         className="cta"
         id="contact"
+        style={{
+          scrollMarginTop: "100px",
+        }}
       >
 
         <div className="cta-content">
@@ -2953,7 +3015,9 @@ function App() {
 
         </div>
 
-        {/* AUDIT FORM */}
+        {/* =========================
+            AUDIT FORM
+        ========================= */}
 
         <form
           className="audit-form"
@@ -2961,20 +3025,44 @@ function App() {
 
             e.preventDefault();
 
+            if (leadSubmitting) {
+              return;
+            }
+
+            const form =
+              e.currentTarget;
+
             const business =
-              e.target.business.value;
+              form.business.value.trim();
 
             const customerName =
-              e.target.name.value;
+              form.name.value.trim();
 
             const phone =
-              e.target.phone.value;
+              form.phone.value.trim();
 
             const email =
-              e.target.email.value;
+              form.email.value.trim();
 
             const type =
-              e.target.type.value;
+              form.type.value;
+
+            if (
+              !business ||
+              !customerName ||
+              !phone ||
+              !email ||
+              !type
+            ) {
+              showToast(
+                "Please fill all fields.",
+                "error"
+              );
+
+              return;
+            }
+
+            setLeadSubmitting(true);
 
             try {
 
@@ -2985,6 +3073,8 @@ function App() {
                     method: "POST",
                     headers: {
                       "Content-Type":
+                        "application/json",
+                      Accept:
                         "application/json",
                     },
                     body:
@@ -3003,28 +3093,32 @@ function App() {
                 await response.json();
 
               if (!response.ok) {
-
-                showToast(
+                throw new Error(
                   result.message ||
-                    "Failed to submit enquiry",
-                  "error"
+                    "Failed to submit enquiry."
                 );
+              }
 
-                return;
+              if (
+                !result.success
+              ) {
+                throw new Error(
+                  result.message ||
+                    "Failed to submit enquiry."
+                );
               }
 
               if (
                 isAdminPage &&
-                isAdminLoggedIn
+                isAdminLoggedIn &&
+                result.data
               ) {
-
                 setLeads(
                   (prev) => [
                     result.data,
                     ...prev,
                   ]
                 );
-
               }
 
               const whatsappMessage =
@@ -3053,7 +3147,7 @@ function App() {
                 "_blank"
               );
 
-              e.target.reset();
+              form.reset();
 
               showToast(
                 "Enquiry submitted successfully!",
@@ -3068,9 +3162,12 @@ function App() {
               );
 
               showToast(
-                "Server error. Please try again.",
+                error.message ||
+                  "Server error. Please try again.",
                 "error"
               );
+            } finally {
+              setLeadSubmitting(false);
             }
 
           }}
@@ -3081,6 +3178,7 @@ function App() {
             type="text"
             placeholder="Business Name"
             required
+            disabled={leadSubmitting}
           />
 
           <input
@@ -3088,6 +3186,7 @@ function App() {
             type="text"
             placeholder="Your Name"
             required
+            disabled={leadSubmitting}
           />
 
           <input
@@ -3095,6 +3194,7 @@ function App() {
             type="tel"
             placeholder="Mobile Number"
             required
+            disabled={leadSubmitting}
           />
 
           <input
@@ -3102,11 +3202,13 @@ function App() {
             type="email"
             placeholder="Email Address"
             required
+            disabled={leadSubmitting}
           />
 
           <select
             name="type"
             required
+            disabled={leadSubmitting}
           >
 
             <option value="">
@@ -3150,8 +3252,11 @@ function App() {
           <button
             type="submit"
             className="primary-btn"
+            disabled={leadSubmitting}
           >
-            Get Free Digital Audit →
+            {leadSubmitting
+              ? "Submitting..."
+              : "Get Free Digital Audit →"}
           </button>
 
         </form>
@@ -3227,7 +3332,7 @@ function App() {
       </footer>
 
       {/* =========================
-          FLOATING AI CHATBOT
+          FLOATING AI CHATBOT BUTTON
       ========================= */}
 
       <button
@@ -3245,7 +3350,7 @@ function App() {
         style={{
           position: "fixed",
           right: "25px",
-          bottom: "25px",
+          bottom: "90px",
           width: "60px",
           height: "60px",
           borderRadius: "50%",
@@ -3265,13 +3370,17 @@ function App() {
           : "✦"}
       </button>
 
+      {/* =========================
+          AI CHAT WINDOW
+      ========================= */}
+
       {isChatOpen && (
         <div
           id="ai-chat-window"
           style={{
             position: "fixed",
             right: "25px",
-            bottom: "100px",
+            bottom: "165px",
             width: "360px",
             maxWidth:
               "calc(100vw - 40px)",
@@ -3398,6 +3507,8 @@ function App() {
                       "1.5",
                     wordBreak:
                       "break-word",
+                    whiteSpace:
+                      "pre-wrap",
                   }}
                 >
                   {chat.text}
@@ -3513,4 +3624,3 @@ function App() {
 }
 
 export default App;
-
