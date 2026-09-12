@@ -34,14 +34,10 @@ const leadSchema = new mongoose.Schema(
     },
 
     status: {
-      type: String,
-      status: {
   type: String,
   enum: ["New", "Contacted", "Converted", "Closed"],
   default: "New",
 },
-      default: "New",
-    },
   },
   {
     timestamps: true,
