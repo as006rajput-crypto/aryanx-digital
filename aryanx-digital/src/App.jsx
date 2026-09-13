@@ -2221,214 +2221,127 @@ function App() {
           FOOTER
       ===================================================== */}
 
-      <footer>
-        <div className="footer-logo">
-          ARYAN
-          <span>
-            X
-          </span>
+      
+        
+<footer>
+  <div className="footer-logo">
+    ARYAN
+    <span>X</span>
+    <small>DIGITAL</small>
+  </div>
 
-          <small>
-            DIGITAL
-          </small>
-        </div>
+  <p>
+    AI-Powered Digital Growth
+    Partner for Businesses.
+  </p>
 
-        <p>
-          AI-Powered Digital Growth
-          Partner for Businesses.
-        </p>
+  <div className="footer-links">
+    <a href="#services">Services</a>
+    <a href="#about">About</a>
+    <a href="#ai">AI Solutions</a>
+    <a href="#contact">Contact</a>
+    <a href="/admin">Admin</a>
+  </div>
 
-        <div className="footer-links">
-          <a href="#services">
-            Services
-          </a>
+  <div className="copyright">
+    © 2026 AryanX Digital.
+    All rights reserved.
+  </div>
 
-          <a href="#about">
-            About
-          </a>
+  {/* Professional Footer Dialogue Box */}
+  <div
+    style={{
+      width: "min(850px, 100%)",
+      margin: "35px auto 0",
+      padding: "32px 24px",
+      borderRadius: "24px",
+      border: "1px solid rgba(37, 99, 235, 0.22)",
+      background:
+        "linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(6, 182, 212, 0.10))",
+      boxShadow:
+        "0 18px 50px rgba(0, 0, 0, 0.10)",
+      textAlign: "center",
+      boxSizing: "border-box",
+    }}
+  >
+    <span
+      style={{
+        display: "inline-block",
+        marginBottom: "10px",
+        fontSize: "12px",
+        fontWeight: "800",
+        letterSpacing: "2px",
+        color: "#2563eb",
+      }}
+    >
+      ✦ LET'S BUILD SOMETHING SMART
+    </span>
 
-          <a href="#ai">
-            AI Solutions
-          </a>
+    <h3
+      style={{
+        margin: "0 0 10px",
+        fontSize: "clamp(22px, 4vw, 30px)",
+        fontWeight: "800",
+        lineHeight: "1.25",
+      }}
+    >
+      Ready to grow your business?
+    </h3>
 
-          <a href="#contact">
-            Contact
-          </a>
+    <p
+      style={{
+        maxWidth: "620px",
+        margin: "0 auto 24px",
+        lineHeight: "1.7",
+        opacity: 0.78,
+        fontSize: "15px",
+      }}
+    >
+      Let's build, automate and grow your business with
+      AI-powered digital solutions designed for real business growth.
+    </p>
 
-          <a href="/admin">
-            Admin
-          </a>
-        </div>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "12px",
+        flexWrap: "wrap",
+      }}
+    >
+      <a
+        href="#contact"
+        className="primary-btn"
+        style={{
+          textDecoration: "none",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        Get Free Digital Audit →
+      </a>
 
-        <div className="copyright">
-          © 2026 AryanX Digital.
-          All rights reserved.
-        </div>
+      <a
+        href="https://wa.me/917070858521"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="secondary-btn"
+        style={{
+          textDecoration: "none",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        💬 WhatsApp Us
+      </a>
+    </div>
+  </div>
+</footer>
 
-        <a
-          href="https://wa.me/917070858521"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="whatsapp-btn"
-        >
-          WhatsApp Us
-        </a>
 
-        {/* =================================================
-            NEW PROFESSIONAL DIALOGUE BOX
-        ================================================= */}
-
-        <div
-          style={{
-            width: "min(900px, 92%)",
-            margin: "55px auto 10px",
-            padding: "35px 30px",
-            borderRadius: "24px",
-            position: "relative",
-            overflow: "hidden",
-            background:
-              "linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,47,82,0.98))",
-            border:
-              "1px solid rgba(59,130,246,0.35)",
-            boxShadow:
-              "0 20px 60px rgba(0,0,0,0.25), 0 0 35px rgba(37,99,235,0.12)",
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "180px",
-              height: "180px",
-              borderRadius: "50%",
-              background:
-                "rgba(37,99,235,0.16)",
-              filter: "blur(45px)",
-              top: "-80px",
-              left: "-50px",
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              width: "160px",
-              height: "160px",
-              borderRadius: "50%",
-              background:
-                "rgba(6,182,212,0.12)",
-              filter: "blur(45px)",
-              bottom: "-80px",
-              right: "-40px",
-            }}
-          />
-
-          <div
-            style={{
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "52px",
-                height: "52px",
-                borderRadius: "50%",
-                marginBottom: "15px",
-                background:
-                  "linear-gradient(135deg, #2563eb, #06b6d4)",
-                color: "#fff",
-                fontSize: "23px",
-                boxShadow:
-                  "0 8px 25px rgba(37,99,235,0.35)",
-              }}
-            >
-              ✦
-            </div>
-
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: "700",
-                letterSpacing: "2px",
-                color: "#60a5fa",
-                marginBottom: "10px",
-              }}
-            >
-              ARYANX DIGITAL
-            </div>
-
-            <h2
-              style={{
-                margin: "0 0 12px",
-                color: "#ffffff",
-                fontSize:
-                  "clamp(24px, 4vw, 36px)",
-                lineHeight: "1.2",
-              }}
-            >
-              Ready to Grow Your Business?
-            </h2>
-
-            <p
-              style={{
-                maxWidth: "650px",
-                margin: "0 auto 22px",
-                color: "#cbd5e1",
-                fontSize: "15px",
-                lineHeight: "1.7",
-              }}
-            >
-              Let AryanX Digital help you
-              build a smarter, AI-powered
-              digital presence and turn
-              technology into real business
-              growth.
-            </p>
-
-            <p
-              style={{
-                maxWidth: "700px",
-                margin: "0 auto 25px",
-                color: "#94a3b8",
-                fontSize: "14px",
-                lineHeight: "1.6",
-              }}
-            >
-              Websites • AI Automation •
-              Digital Marketing • Lead
-              Generation • Business Growth
-            </p>
-
-            <a
-              href="#contact"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                padding: "13px 24px",
-                borderRadius: "10px",
-                textDecoration: "none",
-                color: "#ffffff",
-                fontWeight: "700",
-                fontSize: "14px",
-                background:
-                  "linear-gradient(135deg, #2563eb, #06b6d4)",
-                boxShadow:
-                  "0 10px 25px rgba(37,99,235,0.3)",
-                transition:
-                  "transform 0.2s ease",
-              }}
-            >
-              Start Your Digital Journey →
-            </a>
-          </div>
-        </div>
-      </footer>
 
       {/* =====================================================
           FLOATING AI BUTTON
