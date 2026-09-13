@@ -2223,7 +2223,9 @@ function App() {
 
       
         
+
 <footer>
+
   <div className="footer-logo">
     ARYAN
     <span>X</span>
@@ -2243,103 +2245,58 @@ function App() {
     <a href="/admin">Admin</a>
   </div>
 
-  <div className="copyright">
-    © 2026 AryanX Digital.
-    All rights reserved.
-  </div>
-
-  {/* Professional Footer Dialogue Box */}
+  {/* Small Professional Dialogue Box */}
   <div
     style={{
-      width: "min(850px, 100%)",
-      margin: "35px auto 0",
-      padding: "32px 24px",
-      borderRadius: "24px",
-      border: "1px solid rgba(37, 99, 235, 0.22)",
-      background:
-        "linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(6, 182, 212, 0.10))",
-      boxShadow:
-        "0 18px 50px rgba(0, 0, 0, 0.10)",
+      width: "min(520px, 92%)",
+      margin: "24px auto 0",
+      padding: "18px 20px",
+      borderRadius: "16px",
+      background: "rgba(37, 99, 235, 0.06)",
+      border: "1px solid rgba(37, 99, 235, 0.18)",
       textAlign: "center",
       boxSizing: "border-box",
     }}
   >
-    <span
+    <div
       style={{
-        display: "inline-block",
-        marginBottom: "10px",
-        fontSize: "12px",
+        fontSize: "11px",
         fontWeight: "800",
-        letterSpacing: "2px",
+        letterSpacing: "1.5px",
         color: "#2563eb",
+        marginBottom: "6px",
       }}
     >
-      ✦ LET'S BUILD SOMETHING SMART
-    </span>
-
-    <h3
-      style={{
-        margin: "0 0 10px",
-        fontSize: "clamp(22px, 4vw, 30px)",
-        fontWeight: "800",
-        lineHeight: "1.25",
-      }}
-    >
-      Ready to grow your business?
-    </h3>
+      ✦ READY TO GROW?
+    </div>
 
     <p
       style={{
-        maxWidth: "620px",
-        margin: "0 auto 24px",
-        lineHeight: "1.7",
-        opacity: 0.78,
-        fontSize: "15px",
+        margin: "0 0 12px",
+        fontSize: "13px",
+        lineHeight: "1.5",
+        opacity: 0.75,
       }}
     >
-      Let's build, automate and grow your business with
-      AI-powered digital solutions designed for real business growth.
+      Build, automate & grow your business with AryanX Digital.
     </p>
 
-    <div
+    <a
+      href="#contact"
+      className="primary-btn"
       style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: "12px",
-        flexWrap: "wrap",
+        display: "inline-flex",
+        textDecoration: "none",
+        fontSize: "13px",
+        padding: "9px 16px",
       }}
     >
-      <a
-        href="#contact"
-        className="primary-btn"
-        style={{
-          textDecoration: "none",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        Get Free Digital Audit →
-      </a>
-
-      <a
-        href="https://wa.me/917070858521"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="secondary-btn"
-        style={{
-          textDecoration: "none",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        💬 WhatsApp Us
-      </a>
-    </div>
+      Get Free Digital Audit →
+    </a>
   </div>
+
 </footer>
+
 
 
 
