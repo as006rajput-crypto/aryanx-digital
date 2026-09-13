@@ -98,16 +98,36 @@ function App() {
 
   // =========================================================
   // AUTH HEADERS
+  // IMPORTANT:
+  // ALWAYS READ THE LATEST TOKEN FROM LOCAL STORAGE
   // =========================================================
 
   const getAuthHeaders = () => {
-    if (!adminToken) {
+    const token =
+      localStorage.getItem("adminToken") ||
+      adminToken ||
+      "";
+
+    if (!token) {
       return {};
     }
 
     return {
-      Authorization: `Bearer ${adminToken}`,
+      Authorization: `Bearer ${token}`,
     };
+  };
+
+  // =========================================================
+  // CLEAR ADMIN SESSION
+  // =========================================================
+
+  const clearAdminSession = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminEmail");
+
+    setAdminToken("");
+    setAdminEmail("");
+    setLeads([]);
   };
 
   // =========================================================
@@ -117,55 +137,111 @@ function App() {
   const handleAdminLogin = async (e) => {
     e.preventDefault();
 
-    if (!adminEmail.trim() || !document.getElementById("adminPassword")?.value) {
-      showToast("Please enter email and password.", "error");
-      return;
-    }
-
     const password =
       document.getElementById("adminPassword")?.value || "";
+
+    const loginEmail = adminEmail.trim();
+
+    if (!loginEmail || !password) {
+      showToast(
+        "Please enter email and password.",
+        "error"
+      );
+      return;
+    }
 
     try {
       setLeadsLoading(true);
 
-      const response = await fetch(API("/api/admin/login"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: adminEmail.trim(),
-          password,
-        }),
-      });
+      const response = await fetch(
+        API("/api/admin/login"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: loginEmail,
+            password,
+          }),
+        }
+      );
 
       const result = await response.json();
 
+      console.log("Admin Login Response:", result);
+
       if (!response.ok || !result.success) {
         showToast(
-          result.message || "Invalid admin credentials.",
+          result.message ||
+            "Invalid admin credentials.",
           "error"
         );
         return;
       }
 
-      const token = result.token;
+      // =====================================================
+      // SUPPORT DIFFERENT TOKEN RESPONSE FORMATS
+      // =====================================================
+
+      const token =
+        result.token ||
+        result.data?.token ||
+        result.accessToken ||
+        result.data?.accessToken ||
+        "";
 
       if (!token) {
-        showToast("Login token was not received.", "error");
+        console.error(
+          "Login succeeded but no JWT token was found:",
+          result
+        );
+
+        showToast(
+          "Login succeeded but authentication token was not received.",
+          "error"
+        );
+
         return;
       }
 
-      localStorage.setItem("adminToken", token);
-      localStorage.setItem("adminEmail", adminEmail.trim());
+      // =====================================================
+      // SAVE JWT TOKEN
+      // =====================================================
 
+      localStorage.setItem(
+        "adminToken",
+        token
+      );
+
+      localStorage.setItem(
+        "adminEmail",
+        loginEmail
+      );
+
+      // Update React state
       setAdminToken(token);
+      setAdminEmail(loginEmail);
 
-      showToast("Admin login successful!", "success");
+      console.log(
+        "Admin token saved successfully."
+      );
 
-      window.location.reload();
+      showToast(
+        "Admin login successful!",
+        "success"
+      );
+
+      // Reload so dashboard starts with stored token
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
-      console.error("Admin Login Error:", error);
+      console.error(
+        "Admin Login Error:",
+        error
+      );
+
       showToast(
         "Unable to connect to backend server.",
         "error"
@@ -180,13 +256,12 @@ function App() {
   // =========================================================
 
   const handleAdminLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminEmail");
+    clearAdminSession();
 
-    setAdminToken("");
-    setAdminEmail("");
-
-    showToast("Logged out successfully.", "success");
+    showToast(
+      "Logged out successfully.",
+      "success"
+    );
 
     setTimeout(() => {
       window.location.href = "/";
@@ -201,7 +276,9 @@ function App() {
     try {
       setLoading(true);
 
-      const response = await fetch(API("/api/tests"));
+      const response = await fetch(
+        API("/api/tests")
+      );
 
       if (!response.ok) {
         throw new Error("Server error");
@@ -215,7 +292,11 @@ function App() {
         setTests([]);
       }
     } catch (error) {
-      console.error("API Error:", error);
+      console.error(
+        "API Error:",
+        error
+      );
+
       setTests([]);
 
       showToast(
@@ -242,7 +323,10 @@ function App() {
         "success"
       );
     } catch (error) {
-      console.error("Refresh Error:", error);
+      console.error(
+        "Refresh Error:",
+        error
+      );
 
       showToast(
         "Unable to refresh database.",
@@ -260,7 +344,10 @@ function App() {
   const addData = async (e) => {
     e.preventDefault();
 
-    if (!name.trim() || !message.trim()) {
+    if (
+      !name.trim() ||
+      !message.trim()
+    ) {
       showToast(
         "Please fill all fields.",
         "error"
@@ -271,18 +358,22 @@ function App() {
     setSaving(true);
 
     try {
-      const response = await fetch(API("/api/test"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          message: message.trim(),
-        }),
-      });
+      const response = await fetch(
+        API("/api/test"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            message: message.trim(),
+          }),
+        }
+      );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result.success) {
         setTests((prev) => [
@@ -305,7 +396,10 @@ function App() {
         );
       }
     } catch (error) {
-      console.error("Add Data Error:", error);
+      console.error(
+        "Add Data Error:",
+        error
+      );
 
       showToast(
         "Backend connection failed.",
@@ -321,9 +415,10 @@ function App() {
   // =========================================================
 
   const deleteData = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this record?"
-    );
+    const confirmDelete =
+      window.confirm(
+        "Are you sure you want to delete this record?"
+      );
 
     if (!confirmDelete) {
       return;
@@ -339,7 +434,8 @@ function App() {
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result.success) {
         setTests((prev) =>
@@ -360,7 +456,10 @@ function App() {
         );
       }
     } catch (error) {
-      console.error("Delete Error:", error);
+      console.error(
+        "Delete Error:",
+        error
+      );
 
       showToast(
         "Backend connection failed.",
@@ -424,7 +523,8 @@ function App() {
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (result.success) {
         setTests((prev) =>
@@ -449,7 +549,10 @@ function App() {
         );
       }
     } catch (error) {
-      console.error("Update Error:", error);
+      console.error(
+        "Update Error:",
+        error
+      );
 
       showToast(
         "Backend connection failed.",
@@ -462,10 +565,26 @@ function App() {
 
   // =========================================================
   // LOAD CUSTOMER LEADS
+  // IMPORTANT:
+  // GET /api/leads REQUIRES JWT
   // =========================================================
 
   const loadLeads = async () => {
-    if (!adminToken) {
+    const token =
+      localStorage.getItem("adminToken") ||
+      adminToken ||
+      "";
+
+    console.log(
+      "Loading leads. Token available:",
+      Boolean(token)
+    );
+
+    if (!token) {
+      console.warn(
+        "No admin token found."
+      );
+
       setLeads([]);
       return;
     }
@@ -478,16 +597,34 @@ function App() {
         {
           method: "GET",
           headers: {
-            ...getAuthHeaders(),
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      if (response.status === 401) {
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminEmail");
+      console.log(
+        "GET /api/leads status:",
+        response.status
+      );
 
-        setAdminToken("");
+      const result =
+        await response.json();
+
+      console.log(
+        "GET /api/leads response:",
+        result
+      );
+
+      // =====================================================
+      // TOKEN EXPIRED / INVALID
+      // =====================================================
+
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        clearAdminSession();
 
         showToast(
           "Admin session expired. Please login again.",
@@ -497,10 +634,24 @@ function App() {
         return;
       }
 
-      const result = await response.json();
+      if (!response.ok) {
+        setLeads([]);
+
+        showToast(
+          result.message ||
+            "Unable to load customer inquiries.",
+          "error"
+        );
+
+        return;
+      }
 
       if (result.success) {
-        setLeads(result.data || []);
+        setLeads(
+          Array.isArray(result.data)
+            ? result.data
+            : []
+        );
       } else {
         setLeads([]);
 
@@ -511,7 +662,10 @@ function App() {
         );
       }
     } catch (error) {
-      console.error("Load Leads Error:", error);
+      console.error(
+        "Load Leads Error:",
+        error
+      );
 
       setLeads([]);
 
@@ -550,6 +704,8 @@ function App() {
 
   // =========================================================
   // CUSTOMER INQUIRY SUBMIT
+  // PUBLIC API
+  // SAVES TO MONGODB THEN OPENS WHATSAPP
   // =========================================================
 
   const handleAuditSubmit = async (e) => {
@@ -591,13 +747,19 @@ function App() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(leadData),
+          body: JSON.stringify(
+            leadData
+          ),
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         showToast(
           result.message ||
             "Unable to save inquiry.",
@@ -606,6 +768,11 @@ function App() {
 
         return;
       }
+
+      console.log(
+        "Customer inquiry saved:",
+        result
+      );
 
       showToast(
         "Inquiry saved successfully! Opening WhatsApp...",
@@ -672,6 +839,19 @@ function App() {
     id,
     newStatus
   ) => {
+    const token =
+      localStorage.getItem("adminToken") ||
+      adminToken ||
+      "";
+
+    if (!token) {
+      showToast(
+        "Admin authentication required. Please login again.",
+        "error"
+      );
+      return;
+    }
+
     setLeadUpdatingId(id);
 
     try {
@@ -681,7 +861,8 @@ function App() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            ...getAuthHeaders(),
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             status: newStatus,
@@ -689,9 +870,27 @@ function App() {
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        clearAdminSession();
+
+        showToast(
+          "Admin session expired. Please login again.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         showToast(
           result.message ||
             "Unable to update lead status.",
@@ -738,11 +937,25 @@ function App() {
   // =========================================================
 
   const deleteLead = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this customer inquiry?"
-    );
+    const confirmDelete =
+      window.confirm(
+        "Are you sure you want to delete this customer inquiry?"
+      );
 
     if (!confirmDelete) {
+      return;
+    }
+
+    const token =
+      localStorage.getItem("adminToken") ||
+      adminToken ||
+      "";
+
+    if (!token) {
+      showToast(
+        "Admin authentication required. Please login again.",
+        "error"
+      );
       return;
     }
 
@@ -754,14 +967,33 @@ function App() {
         {
           method: "DELETE",
           headers: {
-            ...getAuthHeaders(),
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        clearAdminSession();
+
+        showToast(
+          "Admin session expired. Please login again.",
+          "error"
+        );
+
+        return;
+      }
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         showToast(
           result.message ||
             "Unable to delete inquiry.",
@@ -843,7 +1075,10 @@ function App() {
     const userMessage =
       chatInput.trim();
 
-    if (!userMessage || aiLoading) {
+    if (
+      !userMessage ||
+      aiLoading
+    ) {
       return;
     }
 
@@ -857,7 +1092,10 @@ function App() {
       newUserMessage,
     ];
 
-    setChatMessages(updatedMessages);
+    setChatMessages(
+      updatedMessages
+    );
+
     setChatInput("");
     setAiLoading(true);
 
@@ -871,19 +1109,21 @@ function App() {
           },
           body: JSON.stringify({
             message: userMessage,
-            history: updatedMessages.map(
-              (item) => ({
-                role:
-                  item.role === "assistant"
-                    ? "model"
-                    : "user",
-                parts: [
-                  {
-                    text: item.text,
-                  },
-                ],
-              })
-            ),
+            history:
+              updatedMessages.map(
+                (item) => ({
+                  role:
+                    item.role ===
+                    "assistant"
+                      ? "model"
+                      : "user",
+                  parts: [
+                    {
+                      text: item.text,
+                    },
+                  ],
+                })
+              ),
           }),
         }
       );
@@ -891,7 +1131,10 @@ function App() {
       const result =
         await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         throw new Error(
           result.message ||
             "AI request failed"
@@ -939,16 +1182,46 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isAdminPage && adminToken) {
-      loadLeads();
+    const storedToken =
+      localStorage.getItem(
+        "adminToken"
+      ) || "";
+
+    const storedEmail =
+      localStorage.getItem(
+        "adminEmail"
+      ) || "";
+
+    if (storedToken) {
+      setAdminToken(storedToken);
     }
-  }, [isAdminPage, adminToken]);
+
+    if (storedEmail) {
+      setAdminEmail(storedEmail);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAdminPage) {
+      const storedToken =
+        localStorage.getItem(
+          "adminToken"
+        ) || "";
+
+      if (storedToken) {
+        loadLeads();
+      }
+    }
+  }, [isAdminPage]);
 
   // =========================================================
   // ADMIN LOGIN PAGE
   // =========================================================
 
-  if (isAdminPage && !adminToken) {
+  if (
+    isAdminPage &&
+    !adminToken
+  ) {
     return (
       <div className="app">
         {toast && (
@@ -1010,7 +1283,8 @@ function App() {
               <div
                 className="ai-orb"
                 style={{
-                  margin: "0 auto 20px",
+                  margin:
+                    "0 auto 20px",
                 }}
               >
                 ✦
@@ -1057,7 +1331,9 @@ function App() {
               <button
                 type="submit"
                 className="primary-btn"
-                disabled={leadsLoading}
+                disabled={
+                  leadsLoading
+                }
               >
                 {leadsLoading
                   ? "Logging in..."
@@ -1085,14 +1361,19 @@ function App() {
   // ADMIN DASHBOARD
   // =========================================================
 
-  if (isAdminPage && adminToken) {
-    const totalLeads = leads.length;
+  if (
+    isAdminPage &&
+    adminToken
+  ) {
+    const totalLeads =
+      leads.length;
 
-    const newLeads = leads.filter(
-      (lead) =>
-        (lead.status || "New") ===
-        "New"
-    ).length;
+    const newLeads =
+      leads.filter(
+        (lead) =>
+          (lead.status || "New") ===
+          "New"
+      ).length;
 
     const contactedLeads =
       leads.filter(
@@ -1197,7 +1478,9 @@ function App() {
             <h2>
               Customer
               <br />
-              <em>Inquiry Dashboard.</em>
+              <em>
+                Inquiry Dashboard.
+              </em>
             </h2>
 
             <p>
@@ -1309,7 +1592,9 @@ function App() {
             <button
               type="button"
               className="primary-btn"
-              onClick={refreshLeads}
+              onClick={
+                refreshLeads
+              }
               disabled={
                 leadRefreshing ||
                 leadsLoading
@@ -2168,7 +2453,9 @@ function App() {
               placeholder="Enter name"
               value={name}
               onChange={(e) =>
-                setName(e.target.value)
+                setName(
+                  e.target.value
+                )
               }
               disabled={saving}
             />
@@ -2486,9 +2773,9 @@ function App() {
         </div>
 
         {/* =================================================
-            IMPORTANT:
-            THIS FORM NOW SAVES TO MONGODB
-            AND THEN OPENS WHATSAPP.
+            CUSTOMER AUDIT FORM
+            SAVES TO MONGODB
+            THEN OPENS WHATSAPP
         ================================================= */}
 
         <form
@@ -2730,7 +3017,8 @@ function App() {
             position: "fixed",
             right: "25px",
             bottom: "165px",
-            width: "min(380px, calc(100vw - 30px))",
+            width:
+              "min(380px, calc(100vw - 30px))",
             height: "520px",
             background: "#fff",
             borderRadius: "18px",
