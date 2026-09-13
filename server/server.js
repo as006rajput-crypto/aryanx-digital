@@ -1,8 +1,3 @@
-
-const dns = require("dns");
-
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
-
 require("dotenv").config();
 
 const express = require("express");
@@ -11,21 +6,14 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const Test = require("./models/test");
 const Lead = require("./models/Lead");
+const Test = require("./models/test");
 
 const app = express();
 
-// =====================================================
-// MIDDLEWARE
-// =====================================================
+const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
-
-// =====================================================
-// ADMIN CONFIG
-// =====================================================
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const ADMIN_EMAIL =
   process.env.ADMIN_EMAIL || "admin@aryanxdigital.com";
@@ -36,109 +24,29 @@ const ADMIN_PASSWORD =
 const JWT_SECRET =
   process.env.JWT_SECRET || "aryanx-digital-secret-key";
 
-// =====================================================
-// GEMINI AI CONFIG
-// =====================================================
-
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Current Gemini Flash model.
-// You can change this from .env if needed.
 const GEMINI_MODEL =
   process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
-// =====================================================
-// ARYANX AI SYSTEM INSTRUCTION
-// =====================================================
+/* =========================
+   MIDDLEWARE
+========================= */
 
-const ARYANX_AI_SYSTEM_PROMPT = `
-You are AryanX AI, the official AI business assistant for AryanX Digital.
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
-Your job is to help visitors understand AryanX Digital's digital services
-and guide them toward the right solution.
+app.use(express.json());
 
-ABOUT ARYANX DIGITAL:
-AryanX Digital is an AI-powered digital growth and technology business.
+app.use(express.urlencoded({ extended: true }));
 
-MAIN SERVICES:
-1. Professional website development
-2. Mobile-friendly web development
-3. Digital marketing
-4. Social media solutions
-5. Lead generation
-6. Customer lead management
-7. AI-powered customer support
-8. WhatsApp automation
-9. Business automation
-10. Business analytics
-11. AI solutions for businesses
-12. Digital growth consulting
-
-YOUR BEHAVIOR:
-- Be helpful, natural and professional.
-- Understand the user's actual question instead of matching keywords.
-- Answer in the same language style as the user.
-- If the user speaks Hindi, reply in Hindi.
-- If the user speaks Hinglish, reply in Hinglish.
-- If the user speaks English, reply in English.
-- Keep answers clear and reasonably concise.
-- You can explain technical concepts in simple language.
-- Ask a useful follow-up question when more information is needed.
-- Help users identify which AryanX Digital service may be useful for them.
-- If someone describes their business, understand their business type and suggest relevant digital solutions.
-- Do not repeatedly introduce yourself in every answer.
-
-IMPORTANT BUSINESS RULES:
-- Never invent prices.
-- Never claim a service has a specific price unless the user provides that price.
-- Never invent clients, customers, certifications, partnerships, awards or business results.
-- Never promise guaranteed sales, guaranteed leads, guaranteed revenue or guaranteed business growth.
-- If the user asks for pricing, explain that pricing depends on requirements and recommend submitting the Free Digital Audit/contact form.
-- If the user wants to contact AryanX Digital, guide them toward the website's Free Digital Audit/contact option or WhatsApp enquiry option.
-- Do not claim that you personally performed an action if you cannot actually perform it.
-- Do not pretend to access private company databases or customer information.
-
-SALES SUPPORT:
-When appropriate, ask questions such as:
-- What type of business do you have?
-- Do you already have a website?
-- What is your main goal?
-- Do you want more leads, automation, online presence or customer support?
-
-TECHNICAL QUESTIONS:
-You may answer general questions about:
-- Websites
-- HTML
-- CSS
-- JavaScript
-- React
-- Node.js
-- APIs
-- AI
-- Automation
-- Digital marketing
-- Business analytics
-
-For questions unrelated to AryanX Digital, you may still provide a useful general answer,
-but do not falsely connect unrelated topics to AryanX Digital.
-
-SAFETY:
-Do not provide harmful, illegal or dangerous instructions.
-Do not request passwords, API keys, banking credentials or other sensitive information.
-
-Your goal is to provide genuinely useful answers rather than fixed keyword-based responses.
-`;
-
-// =====================================================
-// OBJECT ID VALIDATION
-// =====================================================
-
-const isValidObjectId = (id) =>
-  mongoose.Types.ObjectId.isValid(id);
-
-// =====================================================
-// HOME ROUTE
-// =====================================================
+/* =========================
+   BASIC ROUTES
+========================= */
 
 app.get("/", (req, res) => {
   res.json({
@@ -147,182 +55,49 @@ app.get("/", (req, res) => {
   });
 });
 
-// =====================================================
-// DAY 7 - REAL ARYANX AI ASSISTANT
-// =====================================================
-
-app.post("/api/ai/chat", async (req, res) => {
-  try {
-    const { message, history } = req.body;
-
-    // -------------------------------------------------
-    // Validate message
-    // -------------------------------------------------
-
-    if (
-      !message ||
-      typeof message !== "string" ||
-      !message.trim()
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Please enter a message.",
-      });
-    }
-
-    // -------------------------------------------------
-    // Check Gemini API key
-    // -------------------------------------------------
-
-    if (!GEMINI_API_KEY) {
-      console.error(
-        "GEMINI_API_KEY is missing from server .env"
-      );
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "AI service is not configured. Please add GEMINI_API_KEY to the server .env file.",
-      });
-    }
-
-    // -------------------------------------------------
-    // Build conversation
-    // -------------------------------------------------
-
-    const contents = [];
-
-    // Optional conversation history.
-    // This allows the frontend to send previous messages later.
-    if (Array.isArray(history)) {
-      const safeHistory = history
-        .filter(
-          (item) =>
-            item &&
-            (item.role === "user" ||
-              item.role === "model") &&
-            typeof item.text === "string" &&
-            item.text.trim()
-        )
-        .slice(-12);
-
-      for (const item of safeHistory) {
-        contents.push({
-          role: item.role,
-          parts: [
-            {
-              text: item.text.trim(),
-            },
-          ],
-        });
-      }
-    }
-
-    // Current user message
-    contents.push({
-      role: "user",
-      parts: [
-        {
-          text: message.trim(),
-        },
-      ],
-    });
-
-    // -------------------------------------------------
-    // Gemini API request
-    // -------------------------------------------------
-
-    const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-    const geminiResponse = await fetch(geminiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        system_instruction: {
-          parts: [
-            {
-              text: ARYANX_AI_SYSTEM_PROMPT,
-            },
-          ],
-        },
-
-        contents,
-
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 700,
-        },
-      }),
-    });
-
-    // -------------------------------------------------
-    // Parse Gemini response
-    // -------------------------------------------------
-
-    const geminiData = await geminiResponse.json();
-
-    if (!geminiResponse.ok) {
-      console.error(
-        "Gemini API Error:",
-        JSON.stringify(geminiData, null, 2)
-      );
-
-      return res.status(502).json({
-        success: false,
-        message:
-          "AI service could not process the request.",
-      });
-    }
-
-    // -------------------------------------------------
-    // Extract AI response safely
-    // -------------------------------------------------
-
-    const reply =
-      geminiData?.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text || "")
-        .join("")
-        .trim();
-
-    if (!reply) {
-      console.error(
-        "Gemini returned no usable response:",
-        JSON.stringify(geminiData, null, 2)
-      );
-
-      return res.status(502).json({
-        success: false,
-        message:
-          "AI returned an empty response. Please try again.",
-      });
-    }
-
-    // -------------------------------------------------
-    // Send response to frontend
-    // -------------------------------------------------
-
-    return res.json({
-      success: true,
-      reply,
-    });
-  } catch (error) {
-    console.error("AI Chat Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "AI Assistant server error. Please try again.",
-    });
-  }
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    database:
+      mongoose.connection.readyState === 1
+        ? "connected"
+        : "disconnected",
+  });
 });
 
-// =====================================================
-// ADMIN LOGIN
-// =====================================================
+/* =========================
+   AUTH MIDDLEWARE
+========================= */
+
+const authenticateAdmin = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    req.admin = decoded;
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired authentication token",
+    });
+  }
+};
+
+/* =========================
+   ADMIN LOGIN
+========================= */
 
 app.post("/api/admin/login", async (req, res) => {
   try {
@@ -335,27 +110,28 @@ app.post("/api/admin/login", async (req, res) => {
       });
     }
 
-    if (
-      email.trim().toLowerCase() !==
-      ADMIN_EMAIL.toLowerCase()
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+    const validEmail =
+      email.trim().toLowerCase() ===
+      ADMIN_EMAIL.trim().toLowerCase();
+
+    let validPassword = false;
+
+    /*
+      Supports both:
+      1. Plain password from environment
+      2. bcrypt hashed password
+    */
+
+    if (ADMIN_PASSWORD.startsWith("$2")) {
+      validPassword = await bcrypt.compare(
+        password,
+        ADMIN_PASSWORD
+      );
+    } else {
+      validPassword = password === ADMIN_PASSWORD;
     }
 
-    const hashedPassword = await bcrypt.hash(
-      ADMIN_PASSWORD,
-      10
-    );
-
-    const passwordMatch = await bcrypt.compare(
-      password,
-      hashedPassword
-    );
-
-    if (!passwordMatch) {
+    if (!validEmail || !validPassword) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
@@ -369,262 +145,33 @@ app.post("/api/admin/login", async (req, res) => {
       },
       JWT_SECRET,
       {
-        expiresIn: "1d",
+        expiresIn: "7d",
       }
     );
 
     return res.json({
       success: true,
-      message: "Admin login successful",
+      message: "Login successful",
       token,
-      admin: {
-        email: ADMIN_EMAIL,
-        role: "admin",
-      },
     });
   } catch (error) {
-    console.error(
-      "POST /api/admin/login error:",
-      error
-    );
+    console.error("Admin Login Error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Login failed",
-      error: error.message,
     });
   }
 });
 
-// =====================================================
-// AUTH MIDDLEWARE
-// =====================================================
+/* =========================
+   CUSTOMER LEADS
+========================= */
 
-const authenticateAdmin = (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (
-      !authHeader ||
-      !authHeader.startsWith("Bearer ")
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    const decoded = jwt.verify(
-      token,
-      JWT_SECRET
-    );
-
-    if (decoded.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Admin access required",
-      });
-    }
-
-    req.admin = decoded;
-
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired token",
-    });
-  }
-};
-
-// =====================================================
-// TEST API
-// =====================================================
-
-app.get("/api/test", (req, res) => {
-  res.json({
-    success: true,
-    message: "AryanX Digital API is working",
-  });
-});
-
-// =====================================================
-// TEST CREATE
-// =====================================================
-
-app.post("/api/test", async (req, res) => {
-  try {
-    const { name, message } = req.body;
-
-    if (
-      !name ||
-      !name.trim() ||
-      !message ||
-      !message.trim()
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and message are required",
-      });
-    }
-
-    const newTest = new Test({
-      name,
-      message,
-    });
-
-    const savedTest = await newTest.save();
-
-    return res.status(201).json({
-      success: true,
-      message: "Data saved successfully",
-      data: savedTest,
-    });
-  } catch (error) {
-    console.error(
-      "POST /api/test error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to save data",
-      error: error.message,
-    });
-  }
-});
-
-// =====================================================
-// TEST READ
-// =====================================================
-
-app.get("/api/tests", async (req, res) => {
-  try {
-    const tests = await Test.find();
-
-    return res.json({
-      success: true,
-      count: tests.length,
-      data: tests,
-    });
-  } catch (error) {
-    console.error(
-      "GET /api/tests error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch data",
-      error: error.message,
-    });
-  }
-});
-
-// =====================================================
-// TEST UPDATE
-// =====================================================
-
-app.put("/api/test/:id", async (req, res) => {
-  if (!isValidObjectId(req.params.id)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid record ID",
-    });
-  }
-
-  try {
-    const { name, message } = req.body;
-
-    const updatedTest =
-      await Test.findByIdAndUpdate(
-        req.params.id,
-        {
-          name,
-          message,
-        },
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
-
-    if (!updatedTest) {
-      return res.status(404).json({
-        success: false,
-        message: "Data not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Data updated successfully",
-      data: updatedTest,
-    });
-  } catch (error) {
-    console.error(
-      "PUT /api/test error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update data",
-      error: error.message,
-    });
-  }
-});
-
-// =====================================================
-// TEST DELETE
-// =====================================================
-
-app.delete("/api/test/:id", async (req, res) => {
-  if (!isValidObjectId(req.params.id)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid record ID",
-    });
-  }
-
-  try {
-    const deletedTest =
-      await Test.findByIdAndDelete(
-        req.params.id
-      );
-
-    if (!deletedTest) {
-      return res.status(404).json({
-        success: false,
-        message: "Data not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Data deleted successfully",
-      data: deletedTest,
-    });
-  } catch (error) {
-    console.error(
-      "DELETE /api/test error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete data",
-      error: error.message,
-    });
-  }
-});
-
-// =====================================================
-// CREATE LEAD
-// PUBLIC API
-// =====================================================
+/*
+  PUBLIC:
+  Customer inquiry submit
+*/
 
 app.post("/api/leads", async (req, res) => {
   try {
@@ -650,18 +197,18 @@ app.post("/api/leads", async (req, res) => {
     }
 
     const newLead = new Lead({
-      business,
-      name,
-      phone,
-      email,
-      type,
+      business: business.trim(),
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email.trim().toLowerCase(),
+      type: type.trim(),
     });
 
     const savedLead = await newLead.save();
 
     return res.status(201).json({
       success: true,
-      message: "Lead saved successfully",
+      message: "Customer inquiry saved successfully",
       data: savedLead,
     });
   } catch (error) {
@@ -678,20 +225,19 @@ app.post("/api/leads", async (req, res) => {
   }
 });
 
-// =====================================================
-// GET ALL LEADS
-// PROTECTED
-// =====================================================
+/*
+  ADMIN:
+  Get all customer inquiries
+*/
 
 app.get(
   "/api/leads",
   authenticateAdmin,
   async (req, res) => {
     try {
-      const leads =
-        await Lead.find().sort({
-          createdAt: -1,
-        });
+      const leads = await Lead.find().sort({
+        createdAt: -1,
+      });
 
       return res.json({
         success: true,
@@ -706,51 +252,47 @@ app.get(
 
       return res.status(500).json({
         success: false,
-        message: "Failed to fetch leads",
+        message: "Failed to load customer inquiries",
         error: error.message,
       });
     }
   }
 );
 
-// =====================================================
-// UPDATE LEAD STATUS
-// PROTECTED
-// =====================================================
+/*
+  ADMIN:
+  Update lead status
+*/
 
 app.put(
   "/api/leads/:id/status",
   authenticateAdmin,
   async (req, res) => {
     try {
-      const { id } = req.params;
       const { status } = req.body;
-
-      if (!isValidObjectId(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid lead ID",
-        });
-      }
 
       if (
         ![
           "New",
           "Contacted",
           "Converted",
+          "Closed",
         ].includes(status)
       ) {
         return res.status(400).json({
           success: false,
-          message: "Invalid status",
+          message: "Invalid lead status",
         });
       }
 
       const updatedLead =
         await Lead.findByIdAndUpdate(
-          id,
+          req.params.id,
           { status },
-          { new: true }
+          {
+            new: true,
+            runValidators: true,
+          }
         );
 
       if (!updatedLead) {
@@ -762,8 +304,7 @@ app.put(
 
       return res.json({
         success: true,
-        message:
-          "Lead status updated successfully",
+        message: "Lead status updated successfully",
         data: updatedLead,
       });
     } catch (error) {
@@ -774,35 +315,27 @@ app.put(
 
       return res.status(500).json({
         success: false,
-        message:
-          "Failed to update lead status",
+        message: "Failed to update lead status",
         error: error.message,
       });
     }
   }
 );
 
-// =====================================================
-// DELETE LEAD
-// PROTECTED
-// =====================================================
+/*
+  ADMIN:
+  Delete lead
+*/
 
 app.delete(
   "/api/leads/:id",
   authenticateAdmin,
   async (req, res) => {
     try {
-      const { id } = req.params;
-
-      if (!isValidObjectId(id)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid lead ID",
-        });
-      }
-
       const deletedLead =
-        await Lead.findByIdAndDelete(id);
+        await Lead.findByIdAndDelete(
+          req.params.id
+        );
 
       if (!deletedLead) {
         return res.status(404).json({
@@ -818,7 +351,7 @@ app.delete(
       });
     } catch (error) {
       console.error(
-        "DELETE /api/leads error:",
+        "DELETE /api/leads/:id error:",
         error
       );
 
@@ -831,33 +364,298 @@ app.delete(
   }
 );
 
-// =====================================================
-// MONGODB CONNECTION
-// =====================================================
+/* =========================
+   TEST DATABASE
+========================= */
+
+app.get(
+  "/api/tests",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const tests = await Test.find().sort({
+        createdAt: -1,
+      });
+
+      res.json({
+        success: true,
+        data: tests,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to load test data",
+        error: error.message,
+      });
+    }
+  }
+);
+
+app.post("/api/test", async (req, res) => {
+  try {
+    const { name, message } = req.body;
+
+    if (!name || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and message are required",
+      });
+    }
+
+    const test = new Test({
+      name,
+      message,
+    });
+
+    const savedTest = await test.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Data saved successfully",
+      data: savedTest,
+    });
+  } catch (error) {
+    console.error("POST /api/test:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to save data",
+      error: error.message,
+    });
+  }
+});
+
+app.put(
+  "/api/test/:id",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { name, message } = req.body;
+
+      const updatedTest =
+        await Test.findByIdAndUpdate(
+          req.params.id,
+          {
+            name,
+            message,
+          },
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+
+      if (!updatedTest) {
+        return res.status(404).json({
+          success: false,
+          message: "Record not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Data updated successfully",
+        data: updatedTest,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to update data",
+        error: error.message,
+      });
+    }
+  }
+);
+
+app.delete(
+  "/api/test/:id",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const deletedTest =
+        await Test.findByIdAndDelete(
+          req.params.id
+        );
+
+      if (!deletedTest) {
+        return res.status(404).json({
+          success: false,
+          message: "Record not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Data deleted successfully",
+        data: deletedTest,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to delete data",
+        error: error.message,
+      });
+    }
+  }
+);
+
+/* =========================
+   AI CHAT
+========================= */
+
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    const {
+      message,
+      history = [],
+    } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is required",
+      });
+    }
+
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "AI service is not configured",
+      });
+    }
+
+    const contents = [
+      ...history
+        .filter(
+          (item) =>
+            item &&
+            item.text &&
+            ["user", "model"].includes(item.role)
+        )
+        .map((item) => ({
+          role: item.role,
+          parts: [
+            {
+              text: item.text,
+            },
+          ],
+        })),
+      {
+        role: "user",
+        parts: [
+          {
+            text: message.trim(),
+          },
+        ],
+      },
+    ];
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text:
+                  "You are AryanX AI, a professional AI assistant for AryanX Digital. Help users understand digital marketing, websites, AI, automation and AryanX Digital services. Be concise, helpful and professional.",
+              },
+            ],
+          },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          },
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Gemini Error:", data);
+
+      return res.status(response.status).json({
+        success: false,
+        message:
+          data?.error?.message ||
+          "AI service request failed",
+      });
+    }
+
+    const reply =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || "")
+        .join("")
+        .trim();
+
+    if (!reply) {
+      return res.status(500).json({
+        success: false,
+        message: "AI returned an empty response",
+      });
+    }
+
+    return res.json({
+      success: true,
+      reply,
+    });
+  } catch (error) {
+    console.error("AI Chat Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "AI request failed",
+      error: error.message,
+    });
+  }
+});
+
+/* =========================
+   404
+========================= */
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+/* =========================
+   DATABASE + SERVER
+========================= */
+
+if (!MONGODB_URI) {
+  console.error(
+    "MONGODB_URI is missing from environment variables."
+  );
+  process.exit(1);
+}
 
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(MONGODB_URI)
   .then(() => {
     console.log(
       "MongoDB Connected Successfully"
     );
+
+    app.listen(PORT, () => {
+      console.log(
+        `AryanX Digital Backend running on port ${PORT}`
+      );
+    });
   })
   .catch((error) => {
     console.error(
       "MongoDB Connection Failed:",
       error.message
     );
+
+    process.exit(1);
   });
-
-// =====================================================
-// START SERVER
-// =====================================================
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(
-    `AryanX Digital Backend running on http://localhost:${PORT}`
-  );
-});
-
