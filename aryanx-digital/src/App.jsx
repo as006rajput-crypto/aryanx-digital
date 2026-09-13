@@ -2226,24 +2226,24 @@ function App() {
 
 <footer
   style={{
-    padding: "60px 20px 30px",
+    padding: "40px 20px 35px",
     textAlign: "center",
   }}
 >
   <div
     style={{
-      width: "min(500px, 100%)",
+      maxWidth: "560px",
       margin: "0 auto",
-      padding: "22px 20px",
+      padding: "24px 22px",
       borderRadius: "18px",
-      background: "rgba(255, 255, 255, 0.04)",
-      border: "1px solid rgba(255, 255, 255, 0.12)",
-      boxShadow: "0 10px 35px rgba(0, 0, 0, 0.12)",
+      background: "rgba(255,255,255,0.06)",
+      border: "1px solid rgba(255,255,255,0.14)",
+      boxShadow: "0 12px 35px rgba(0,0,0,0.12)",
     }}
   >
     <div
       style={{
-        fontSize: "20px",
+        fontSize: "18px",
         fontWeight: "800",
         letterSpacing: "1px",
         marginBottom: "8px",
@@ -2254,7 +2254,7 @@ function App() {
 
     <p
       style={{
-        margin: "0 auto 16px",
+        margin: "0 0 16px",
         fontSize: "13px",
         lineHeight: "1.6",
         opacity: 0.75,
@@ -2267,6 +2267,7 @@ function App() {
       style={{
         display: "flex",
         justifyContent: "center",
+        alignItems: "center",
         flexWrap: "wrap",
         gap: "8px",
         fontSize: "12px",
