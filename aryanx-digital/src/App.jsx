@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -25,25 +26,6 @@ function App() {
   const [adminEmail, setAdminEmail] = useState(
     localStorage.getItem("adminEmail") || ""
   );
-
-  // =========================================================
-  // TEST DATABASE STATES
-  // =========================================================
-
-  const [tests, setTests] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-
-  const [saving, setSaving] = useState(false);
-  const [updatingId, setUpdatingId] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const [editingId, setEditingId] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editMessage, setEditMessage] = useState("");
 
   // =========================================================
   // LEAD / CUSTOMER INQUIRY STATES
@@ -98,8 +80,7 @@ function App() {
 
   // =========================================================
   // AUTH HEADERS
-  // IMPORTANT:
-  // ALWAYS READ THE LATEST TOKEN FROM LOCAL STORAGE
+  // ALWAYS USE LATEST TOKEN
   // =========================================================
 
   const getAuthHeaders = () => {
@@ -169,7 +150,10 @@ function App() {
 
       const result = await response.json();
 
-      console.log("Admin Login Response:", result);
+      console.log(
+        "Admin Login Response:",
+        result
+      );
 
       if (!response.ok || !result.success) {
         showToast(
@@ -181,7 +165,7 @@ function App() {
       }
 
       // =====================================================
-      // SUPPORT DIFFERENT TOKEN RESPONSE FORMATS
+      // SUPPORT DIFFERENT TOKEN FORMATS
       // =====================================================
 
       const token =
@@ -219,7 +203,6 @@ function App() {
         loginEmail
       );
 
-      // Update React state
       setAdminToken(token);
       setAdminEmail(loginEmail);
 
@@ -232,7 +215,6 @@ function App() {
         "success"
       );
 
-      // Reload so dashboard starts with stored token
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -269,303 +251,7 @@ function App() {
   };
 
   // =========================================================
-  // LOAD TEST DATABASE
-  // =========================================================
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-
-      const response = await fetch(
-        API("/api/tests")
-      );
-
-      if (!response.ok) {
-        throw new Error("Server error");
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setTests(result.data || []);
-      } else {
-        setTests([]);
-      }
-    } catch (error) {
-      console.error(
-        "API Error:",
-        error
-      );
-
-      setTests([]);
-
-      showToast(
-        "Unable to connect to test database.",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // =========================================================
-  // REFRESH TEST DATABASE
-  // =========================================================
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-
-      await loadData();
-
-      showToast(
-        "Database refreshed successfully!",
-        "success"
-      );
-    } catch (error) {
-      console.error(
-        "Refresh Error:",
-        error
-      );
-
-      showToast(
-        "Unable to refresh database.",
-        "error"
-      );
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // =========================================================
-  // ADD TEST DATA
-  // =========================================================
-
-  const addData = async (e) => {
-    e.preventDefault();
-
-    if (
-      !name.trim() ||
-      !message.trim()
-    ) {
-      showToast(
-        "Please fill all fields.",
-        "error"
-      );
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const response = await fetch(
-        API("/api/test"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: name.trim(),
-            message: message.trim(),
-          }),
-        }
-      );
-
-      const result =
-        await response.json();
-
-      if (result.success) {
-        setTests((prev) => [
-          result.data,
-          ...prev,
-        ]);
-
-        setName("");
-        setMessage("");
-
-        showToast(
-          "Data added successfully!",
-          "success"
-        );
-      } else {
-        showToast(
-          result.message ||
-            "Failed to add data.",
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Add Data Error:",
-        error
-      );
-
-      showToast(
-        "Backend connection failed.",
-        "error"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // =========================================================
-  // DELETE TEST DATA
-  // =========================================================
-
-  const deleteData = async (id) => {
-    const confirmDelete =
-      window.confirm(
-        "Are you sure you want to delete this record?"
-      );
-
-    if (!confirmDelete) {
-      return;
-    }
-
-    setDeletingId(id);
-
-    try {
-      const response = await fetch(
-        API(`/api/test/${id}`),
-        {
-          method: "DELETE",
-        }
-      );
-
-      const result =
-        await response.json();
-
-      if (result.success) {
-        setTests((prev) =>
-          prev.filter(
-            (test) => test._id !== id
-          )
-        );
-
-        showToast(
-          "Data deleted successfully!",
-          "success"
-        );
-      } else {
-        showToast(
-          result.message ||
-            "Failed to delete data.",
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Delete Error:",
-        error
-      );
-
-      showToast(
-        "Backend connection failed.",
-        "error"
-      );
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  // =========================================================
-  // START TEST EDIT
-  // =========================================================
-
-  const startEdit = (test) => {
-    setEditingId(test._id);
-    setEditName(test.name || "");
-    setEditMessage(test.message || "");
-  };
-
-  // =========================================================
-  // CANCEL TEST EDIT
-  // =========================================================
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditName("");
-    setEditMessage("");
-  };
-
-  // =========================================================
-  // UPDATE TEST DATA
-  // =========================================================
-
-  const updateData = async (id) => {
-    if (
-      !editName.trim() ||
-      !editMessage.trim()
-    ) {
-      showToast(
-        "Please fill all fields.",
-        "error"
-      );
-      return;
-    }
-
-    setUpdatingId(id);
-
-    try {
-      const response = await fetch(
-        API(`/api/test/${id}`),
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editName.trim(),
-            message: editMessage.trim(),
-          }),
-        }
-      );
-
-      const result =
-        await response.json();
-
-      if (result.success) {
-        setTests((prev) =>
-          prev.map((test) =>
-            test._id === id
-              ? result.data
-              : test
-          )
-        );
-
-        cancelEdit();
-
-        showToast(
-          "Data updated successfully!",
-          "success"
-        );
-      } else {
-        showToast(
-          result.message ||
-            "Failed to update data.",
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Update Error:",
-        error
-      );
-
-      showToast(
-        "Backend connection failed.",
-        "error"
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // =========================================================
   // LOAD CUSTOMER LEADS
-  // IMPORTANT:
   // GET /api/leads REQUIRES JWT
   // =========================================================
 
@@ -705,7 +391,8 @@ function App() {
   // =========================================================
   // CUSTOMER INQUIRY SUBMIT
   // PUBLIC API
-  // SAVES TO MONGODB THEN OPENS WHATSAPP
+  // SAVES TO MONGODB
+  // THEN OPENS WHATSAPP
   // =========================================================
 
   const handleAuditSubmit = async (e) => {
@@ -737,7 +424,7 @@ function App() {
 
     try {
       // =====================================================
-      // SAVE CUSTOMER INQUIRY TO MONGODB
+      // SAVE CUSTOMER INQUIRY
       // =====================================================
 
       const response = await fetch(
@@ -1174,12 +861,10 @@ function App() {
   };
 
   // =========================================================
-  // USE EFFECT
+  // USE EFFECTS
+  // IMPORTANT:
+  // OLD TEST DATABASE useEffect REMOVED
   // =========================================================
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   useEffect(() => {
     const storedToken =
@@ -1873,10 +1558,6 @@ function App() {
             AI Solutions
           </a>
 
-          <a href="#database">
-            Database
-          </a>
-
           <a href="#contact">
             Contact
           </a>
@@ -2413,327 +2094,6 @@ function App() {
       </section>
 
       {/* =====================================================
-          DATABASE
-      ===================================================== */}
-
-      <section
-        className="backend-section"
-        id="database"
-      >
-        <div className="section-heading">
-          <span>
-            ARYANX DIGITAL DATABASE
-          </span>
-
-          <h2>
-            Manage Your
-            <br />
-            <em>
-              Business Data.
-            </em>
-          </h2>
-
-          <p>
-            Add, view, update and delete
-            data directly through the
-            AryanX Digital website.
-          </p>
-        </div>
-
-        <div className="backend-form">
-          <h3>
-            Add New Record
-          </h3>
-
-          <form
-            onSubmit={addData}
-          >
-            <input
-              type="text"
-              placeholder="Enter name"
-              value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
-              disabled={saving}
-            />
-
-            <textarea
-              placeholder="Enter message"
-              value={message}
-              onChange={(e) =>
-                setMessage(
-                  e.target.value
-                )
-              }
-              rows="4"
-              disabled={saving}
-            />
-
-            <button
-              type="submit"
-              className="primary-btn"
-              disabled={saving}
-            >
-              {saving
-                ? "Saving..."
-                : "Add Data"}
-            </button>
-          </form>
-        </div>
-
-        <div className="section-heading">
-          <span>
-            LIVE BACKEND DATA
-          </span>
-
-          <h2>
-            AryanX Digital
-            <br />
-            <em>
-              Connected to MongoDB.
-            </em>
-          </h2>
-
-          <p>
-            This data is coming directly
-            from our Express API and
-            MongoDB Atlas database.
-          </p>
-        </div>
-
-        {loading ? (
-          <p className="backend-loading">
-            Loading data...
-          </p>
-        ) : tests.length === 0 ? (
-          <p className="backend-loading">
-            No data found.
-          </p>
-        ) : (
-          <div className="backend-data-grid">
-            {tests.map((test) => (
-              <div
-                className="backend-card"
-                key={test._id}
-              >
-                {editingId ===
-                test._id ? (
-                  <>
-                    <span>
-                      EDIT DATABASE RECORD
-                    </span>
-
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) =>
-                        setEditName(
-                          e.target.value
-                        )
-                      }
-                      disabled={
-                        updatingId ===
-                        test._id
-                      }
-                    />
-
-                    <textarea
-                      value={editMessage}
-                      onChange={(e) =>
-                        setEditMessage(
-                          e.target.value
-                        )
-                      }
-                      rows="4"
-                      disabled={
-                        updatingId ===
-                        test._id
-                      }
-                    />
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        marginTop: "15px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className="primary-btn"
-                        onClick={() =>
-                          updateData(
-                            test._id
-                          )
-                        }
-                        disabled={
-                          updatingId ===
-                          test._id
-                        }
-                      >
-                        {updatingId ===
-                        test._id
-                          ? "Updating..."
-                          : "Save Changes"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={
-                          cancelEdit
-                        }
-                        disabled={
-                          updatingId ===
-                          test._id
-                        }
-                        style={{
-                          padding:
-                            "12px 20px",
-                          borderRadius:
-                            "8px",
-                          border:
-                            "1px solid #ccc",
-                          background:
-                            "transparent",
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      DATABASE RECORD
-                    </span>
-
-                    <h3>
-                      {test.name}
-                    </h3>
-
-                    <p>
-                      {test.message}
-                    </p>
-
-                    <small>
-                      ID:{" "}
-                      {test._id}
-                    </small>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        marginTop: "18px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startEdit(
-                            test
-                          )
-                        }
-                        disabled={
-                          deletingId ===
-                            test._id ||
-                          refreshing
-                        }
-                        style={{
-                          padding:
-                            "10px 18px",
-                          borderRadius:
-                            "8px",
-                          border: "none",
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteData(
-                            test._id
-                          )
-                        }
-                        disabled={
-                          deletingId ===
-                          test._id
-                        }
-                        style={{
-                          padding:
-                            "10px 18px",
-                          borderRadius:
-                            "8px",
-                          border: "none",
-                          cursor:
-                            "pointer",
-                        }}
-                      >
-                        {deletingId ===
-                        test._id
-                          ? "Deleting..."
-                          : "Delete"}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "30px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={
-              handleRefresh
-            }
-            disabled={
-              loading ||
-              refreshing
-            }
-            style={{
-              padding:
-                "12px 24px",
-              borderRadius:
-                "8px",
-              border:
-                "1px solid #ccc",
-              background:
-                "transparent",
-              cursor:
-                "pointer",
-              opacity:
-                loading ||
-                refreshing
-                  ? 0.6
-                  : 1,
-            }}
-          >
-            {refreshing
-              ? "Refreshing..."
-              : "🔄 Refresh Database"}
-          </button>
-        </div>
-      </section>
-
-      {/* =====================================================
           CONTACT / FREE DIGITAL AUDIT
       ===================================================== */}
 
@@ -2944,10 +2304,6 @@ function App() {
 
           <a href="#ai">
             AI Solutions
-          </a>
-
-          <a href="#database">
-            Database
           </a>
 
           <a href="#contact">
@@ -3215,3 +2571,4 @@ function App() {
 }
 
 export default App;
+
