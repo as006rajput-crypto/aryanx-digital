@@ -1,5 +1,5 @@
-
 import { useEffect, useState } from "react";
+
 import "./App.css";
 
 const API_URL =
@@ -34,7 +34,6 @@ function App() {
   const [leads, setLeads] = useState([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [leadRefreshing, setLeadRefreshing] = useState(false);
-
   const [leadUpdatingId, setLeadUpdatingId] = useState(null);
   const [leadDeletingId, setLeadDeletingId] = useState(null);
 
@@ -209,6 +208,7 @@ function App() {
       setTimeout(() => {
         window.location.reload();
       }, 500);
+
     } catch (error) {
       console.error(
         "Admin Login Error:",
@@ -219,6 +219,7 @@ function App() {
         "Unable to connect to backend server.",
         "error"
       );
+
     } finally {
       setLeadsLoading(false);
     }
@@ -333,6 +334,7 @@ function App() {
           "error"
         );
       }
+
     } catch (error) {
       console.error(
         "Load Leads Error:",
@@ -345,6 +347,7 @@ function App() {
         "Unable to load customer inquiries.",
         "error"
       );
+
     } finally {
       setLeadsLoading(false);
     }
@@ -364,11 +367,13 @@ function App() {
         "Customer inquiries refreshed!",
         "success"
       );
+
     } catch (error) {
       console.error(
         "Refresh Leads Error:",
         error
       );
+
     } finally {
       setLeadRefreshing(false);
     }
@@ -475,6 +480,7 @@ function App() {
       setPhone("");
       setEmail("");
       setBusinessType("");
+
     } catch (error) {
       console.error(
         "Customer Inquiry Error:",
@@ -485,6 +491,7 @@ function App() {
         "Unable to connect to backend. Please try again.",
         "error"
       );
+
     } finally {
       setLeadSubmitting(false);
     }
@@ -577,6 +584,7 @@ function App() {
         "Lead status updated!",
         "success"
       );
+
     } catch (error) {
       console.error(
         "Update Lead Status Error:",
@@ -587,6 +595,7 @@ function App() {
         "Unable to update lead status.",
         "error"
       );
+
     } finally {
       setLeadUpdatingId(null);
     }
@@ -674,6 +683,7 @@ function App() {
         "Customer inquiry deleted.",
         "success"
       );
+
     } catch (error) {
       console.error(
         "Delete Lead Error:",
@@ -684,6 +694,7 @@ function App() {
         "Unable to delete customer inquiry.",
         "error"
       );
+
     } finally {
       setLeadDeletingId(null);
     }
@@ -816,6 +827,7 @@ function App() {
           text: aiText,
         },
       ]);
+
     } catch (error) {
       console.error(
         "AI Chat Error:",
@@ -830,6 +842,7 @@ function App() {
             "Sorry, I'm unable to connect to AryanX AI right now. Please try again.",
         },
       ]);
+
     } finally {
       setAiLoading(false);
     }
@@ -882,6 +895,7 @@ function App() {
   ) {
     return (
       <div className="app">
+
         {toast && (
           <div
             className={`toast toast-${toast.type}`}
@@ -1056,6 +1070,7 @@ function App() {
 
     return (
       <div className="app">
+
         {toast && (
           <div
             className={`toast toast-${toast.type}`}
@@ -1091,6 +1106,7 @@ function App() {
         )}
 
         <nav className="navbar">
+
           <div className="logo">
             <img
               src="/logo.jpg"
@@ -1120,6 +1136,7 @@ function App() {
               Logout
             </button>
           </div>
+
         </nav>
 
         <section
@@ -1129,6 +1146,7 @@ function App() {
           }}
         >
           <div className="section-heading">
+
             <span>
               ARYANX DIGITAL ADMIN
             </span>
@@ -1146,6 +1164,7 @@ function App() {
               received through the Free
               Digital Audit form.
             </p>
+
           </div>
 
           <div
@@ -1270,7 +1289,9 @@ function App() {
                 Loading customer inquiries...
               </h3>
             </div>
+
           ) : leads.length === 0 ? (
+
             <div
               className="backend-form"
               style={{
@@ -1288,9 +1309,13 @@ function App() {
                 here.
               </p>
             </div>
+
           ) : (
+
             <div className="backend-data-grid">
+
               {leads.map((lead) => (
+
                 <div
                   className="backend-card"
                   key={lead._id}
@@ -1436,9 +1461,12 @@ function App() {
                     </button>
                   </div>
                 </div>
+
               ))}
+
             </div>
           )}
+
         </section>
       </div>
     );
@@ -1450,6 +1478,7 @@ function App() {
 
   return (
     <div className="app">
+
       {toast && (
         <div
           className={`toast toast-${toast.type}`}
@@ -1489,6 +1518,7 @@ function App() {
       ===================================================== */}
 
       <nav className="navbar">
+
         <div className="logo">
           <img
             src="/logo.jpg"
@@ -1497,6 +1527,7 @@ function App() {
         </div>
 
         <div className="nav-links">
+
           <a href="#services">
             Services
           </a>
@@ -1512,6 +1543,7 @@ function App() {
           <a href="#contact">
             Contact
           </a>
+
         </div>
 
         <a
@@ -1520,6 +1552,7 @@ function App() {
         >
           Get Started
         </a>
+
       </nav>
 
       {/* =====================================================
@@ -1527,7 +1560,9 @@ function App() {
       ===================================================== */}
 
       <section className="hero">
+
         <div className="hero-content">
+
           <div className="badge">
             ✦ AI-POWERED DIGITAL GROWTH
           </div>
@@ -1549,6 +1584,7 @@ function App() {
           </p>
 
           <div className="hero-buttons">
+
             <a
               href="#contact"
               className="primary-btn"
@@ -1562,9 +1598,11 @@ function App() {
             >
               Explore Services
             </a>
+
           </div>
 
           <div className="trust">
+
             <div>
               <strong>
                 AI
@@ -1594,10 +1632,13 @@ function App() {
                 Digital Growth
               </span>
             </div>
+
           </div>
+
         </div>
 
         <div className="hero-card">
+
           <div className="card-glow"></div>
 
           <div className="ai-orb">
@@ -1615,6 +1656,7 @@ function App() {
           </h3>
 
           <div className="mini-stats">
+
             <div>
               <span>
                 Leads
@@ -1634,8 +1676,11 @@ function App() {
                 24/7
               </strong>
             </div>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -1646,7 +1691,9 @@ function App() {
         className="section"
         id="services"
       >
+
         <div className="section-heading">
+
           <span>
             OUR SERVICES
           </span>
@@ -1664,10 +1711,13 @@ function App() {
             designed to help your business
             build, automate and grow.
           </p>
+
         </div>
 
         <div className="services-grid">
+
           <div className="service-card">
+
             <div className="service-icon">
               ◈
             </div>
@@ -1702,9 +1752,11 @@ function App() {
             <a href="#contact">
               Get Started →
             </a>
+
           </div>
 
           <div className="service-card featured">
+
             <div className="popular">
               MOST POPULAR
             </div>
@@ -1743,9 +1795,11 @@ function App() {
             <a href="#contact">
               Grow With Us →
             </a>
+
           </div>
 
           <div className="service-card">
+
             <div className="service-icon">
               ◎
             </div>
@@ -1780,8 +1834,11 @@ function App() {
             <a href="#contact">
               Build With AI →
             </a>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -1792,7 +1849,9 @@ function App() {
         className="ai-section"
         id="ai"
       >
+
         <div className="ai-content">
+
           <span className="section-label">
             THE ARYANX ADVANTAGE
           </span>
@@ -1811,6 +1870,7 @@ function App() {
           </p>
 
           <div className="ai-features">
+
             <div>
               <strong>
                 01
@@ -1840,11 +1900,15 @@ function App() {
                 Smart Business Analytics
               </span>
             </div>
+
           </div>
+
         </div>
 
         <div className="ai-dashboard">
+
           <div className="dashboard-top">
+
             <span>
               ARYANX AI
             </span>
@@ -1852,9 +1916,11 @@ function App() {
             <span className="online">
               ● LIVE
             </span>
+
           </div>
 
           <div className="chat">
+
             <div className="message customer">
               Can you tell me about your
               services?
@@ -1874,8 +1940,11 @@ function App() {
               Great. Let's build your
               digital growth system.
             </div>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -1886,7 +1955,9 @@ function App() {
         className="about"
         id="about"
       >
+
         <div className="about-heading">
+
           <span className="section-label">
             ABOUT ARYANX DIGITAL
           </span>
@@ -1898,9 +1969,11 @@ function App() {
               systems that grow.
             </span>
           </h2>
+
         </div>
 
         <div className="about-content">
+
           <p>
             AryanX Digital is an AI-powered
             digital growth company helping
@@ -1918,6 +1991,7 @@ function App() {
           </p>
 
           <div className="about-points">
+
             <div>
               <strong>
                 01
@@ -1947,8 +2021,11 @@ function App() {
                 Growth Focused
               </span>
             </div>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -1956,7 +2033,9 @@ function App() {
       ===================================================== */}
 
       <section className="why-section">
+
         <div className="section-heading">
+
           <span>
             WHY ARYANX DIGITAL
           </span>
@@ -1975,10 +2054,13 @@ function App() {
             technology, AI and business
             strategy.
           </p>
+
         </div>
 
         <div className="why-grid">
+
           <div className="why-card">
+
             <div className="why-number">
               01
             </div>
@@ -1992,9 +2074,11 @@ function App() {
               to make business processes
               smarter and more efficient.
             </p>
+
           </div>
 
           <div className="why-card">
+
             <div className="why-number">
               02
             </div>
@@ -2008,9 +2092,11 @@ function App() {
               around your actual business
               goals and customer needs.
             </p>
+
           </div>
 
           <div className="why-card">
+
             <div className="why-number">
               03
             </div>
@@ -2024,9 +2110,11 @@ function App() {
               grow with your business, from
               the first customer to thousands.
             </p>
+
           </div>
 
           <div className="why-card">
+
             <div className="why-number">
               04
             </div>
@@ -2040,8 +2128,11 @@ function App() {
               delivery. We help businesses
               continuously improve and grow.
             </p>
+
           </div>
+
         </div>
+
       </section>
 
       {/* =====================================================
@@ -2052,7 +2143,9 @@ function App() {
         className="cta"
         id="contact"
       >
+
         <div className="cta-content">
+
           <span>
             START YOUR DIGITAL JOURNEY
           </span>
@@ -2073,6 +2166,7 @@ function App() {
           </p>
 
           <div className="contact-info">
+
             <p>
               📱 +91 70708 58521
             </p>
@@ -2080,7 +2174,9 @@ function App() {
             <p>
               📧 aryan7070t@gmail.com
             </p>
+
           </div>
+
         </div>
 
         <form
@@ -2089,6 +2185,7 @@ function App() {
             handleAuditSubmit
           }
         >
+
           <input
             name="business"
             type="text"
@@ -2214,119 +2311,143 @@ function App() {
               ? "Saving Inquiry..."
               : "Get Free Digital Audit →"}
           </button>
+
         </form>
+
       </section>
 
       {/* =====================================================
-          FOOTER
+          PROFESSIONAL FOOTER CARD
       ===================================================== */}
 
-      
-        
+      <footer
+        style={{
+          padding: "40px 20px 35px",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "560px",
+            margin: "0 auto",
+            padding: "24px 22px",
+            borderRadius: "18px",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow:
+              "0 12px 35px rgba(0,0,0,0.12)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "18px",
+              fontWeight: "800",
+              letterSpacing: "1px",
+              marginBottom: "8px",
+            }}
+          >
+            ARYANX DIGITAL
+          </div>
 
-<footer
-  style={{
-    padding: "40px 20px 35px",
-    textAlign: "center",
-  }}
->
-  <div
-    style={{
-      maxWidth: "560px",
-      margin: "0 auto",
-      padding: "24px 22px",
-      borderRadius: "18px",
-      background: "rgba(255,255,255,0.06)",
-      border: "1px solid rgba(255,255,255,0.14)",
-      boxShadow: "0 12px 35px rgba(0,0,0,0.12)",
-    }}
-  >
-    <div
-      style={{
-        fontSize: "18px",
-        fontWeight: "800",
-        letterSpacing: "1px",
-        marginBottom: "8px",
-      }}
-    >
-      ARYANX DIGITAL
-    </div>
+          <p
+            style={{
+              margin: "0 0 16px",
+              fontSize: "13px",
+              lineHeight: "1.6",
+              opacity: 0.75,
+            }}
+          >
+            AI-Powered Digital Growth Partner for Businesses.
+          </p>
 
-    <p
-      style={{
-        margin: "0 0 16px",
-        fontSize: "13px",
-        lineHeight: "1.6",
-        opacity: 0.75,
-      }}
-    >
-      AI-Powered Digital Growth Partner for Businesses.
-    </p>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+              fontSize: "12px",
+            }}
+          >
+            <a href="#services">
+              Services
+            </a>
 
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: "8px",
-        fontSize: "12px",
-      }}
-    >
-      <a href="#services">Services</a>
-      <span>•</span>
-      <a href="#about">About</a>
-      <span>•</span>
-      <a href="#ai">AI Solutions</a>
-      <span>•</span>
-      <a href="#contact">Contact</a>
-      <span>•</span>
-      <a href="/admin">Admin</a>
-    </div>
-  </div>
-</footer>
+            <span>•</span>
 
-<a
-  href="https://wa.me/917070858521"
-  target="_blank"
-  rel="noopener noreferrer"
-  aria-label="Chat with AryanX Digital on WhatsApp"
-  style={{
-    position: "fixed",
-    right: "22px",
-    bottom: "24px",
-    width: "58px",
-    height: "58px",
-    borderRadius: "50%",
-    background: "#25D366",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    textDecoration: "none",
-    zIndex: 9999,
-    boxShadow: "0 8px 25px rgba(0,0,0,0.22)",
-    transition: "transform 0.2s ease",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform = "scale(1.08)";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform = "scale(1)";
-  }}
->
-  <svg
-    width="30"
-    height="30"
-    viewBox="0 0 24 24"
-    fill="white"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M20.52 3.48A11.86 11.86 0 0 0 12.04 0C5.48 0 .14 5.34.14 11.9c0 2.1.55 4.15 1.6 5.96L.04 24l6.28-1.65a11.88 11.88 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.16-3.43-8.43ZM12.05 21.8a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.73.98.99-3.64-.23-.37a9.85 9.85 0 0 1-1.51-5.28c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.9 6.99c0 5.45-4.44 9.9-9.92 9.9Zm5.42-7.41c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.74-1.64-2.04-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.09 4.5.71.31 1.26.5 1.69.64.71.23 1.35.2 1.86.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35Z" />
-  </svg>
-</a>
+            <a href="#about">
+              About
+            </a>
 
+            <span>•</span>
 
+            <a href="#ai">
+              AI Solutions
+            </a>
 
+            <span>•</span>
+
+            <a href="#contact">
+              Contact
+            </a>
+
+            <span>•</span>
+
+            <a href="/admin">
+              Admin
+            </a>
+          </div>
+        </div>
+      </footer>
+
+      {/* =====================================================
+          WHATSAPP FLOATING BUTTON
+          RIGHT BOTTOM SIDE
+      ===================================================== */}
+
+      <a
+        href="https://wa.me/917070858521"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat with AryanX Digital on WhatsApp"
+        style={{
+          position: "fixed",
+          right: "22px",
+          bottom: "24px",
+          width: "58px",
+          height: "58px",
+          borderRadius: "50%",
+          background: "#25D366",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textDecoration: "none",
+          zIndex: 9999,
+          boxShadow:
+            "0 8px 25px rgba(0,0,0,0.22)",
+          transition:
+            "transform 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform =
+            "scale(1.08)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform =
+            "scale(1)";
+        }}
+      >
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="white"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M20.52 3.48A11.86 11.86 0 0 0 12.04 0C5.48 0 .14 5.34.14 11.9c0 2.1.55 4.15 1.6 5.96L.04 24l6.28-1.65a11.88 11.88 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.16-3.43-8.43ZM12.05 21.8a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.73.98.99-3.64-.23-.37a9.85 9.85 0 0 1-1.51-5.28c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.9 6.99c0 5.45-4.44 9.9-9.92 9.9Zm5.42-7.41c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.74-1.64-2.04-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.09 4.5.71.31 1.26.5 1.69.64.71.23 1.35.2 1.86.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35Z" />
+        </svg>
+      </a>
 
       {/* =====================================================
           FLOATING AI BUTTON
@@ -2564,6 +2685,7 @@ function App() {
           </form>
         </div>
       )}
+
     </div>
   );
 }
