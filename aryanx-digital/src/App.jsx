@@ -2224,77 +2224,65 @@ function App() {
       
         
 
-<footer>
-
-  <div className="footer-logo">
-    ARYAN
-    <span>X</span>
-    <small>DIGITAL</small>
-  </div>
-
-  <p>
-    AI-Powered Digital Growth
-    Partner for Businesses.
-  </p>
-
-  <div className="footer-links">
-    <a href="#services">Services</a>
-    <a href="#about">About</a>
-    <a href="#ai">AI Solutions</a>
-    <a href="#contact">Contact</a>
-    <a href="/admin">Admin</a>
-  </div>
-
-  {/* Small Professional Dialogue Box */}
+<footer
+  style={{
+    padding: "60px 20px 30px",
+    textAlign: "center",
+  }}
+>
   <div
     style={{
-      width: "min(520px, 92%)",
-      margin: "24px auto 0",
-      padding: "18px 20px",
-      borderRadius: "16px",
-      background: "rgba(37, 99, 235, 0.06)",
-      border: "1px solid rgba(37, 99, 235, 0.18)",
-      textAlign: "center",
-      boxSizing: "border-box",
+      width: "min(500px, 100%)",
+      margin: "0 auto",
+      padding: "22px 20px",
+      borderRadius: "18px",
+      background: "rgba(255, 255, 255, 0.04)",
+      border: "1px solid rgba(255, 255, 255, 0.12)",
+      boxShadow: "0 10px 35px rgba(0, 0, 0, 0.12)",
     }}
   >
     <div
       style={{
-        fontSize: "11px",
+        fontSize: "20px",
         fontWeight: "800",
-        letterSpacing: "1.5px",
-        color: "#2563eb",
-        marginBottom: "6px",
+        letterSpacing: "1px",
+        marginBottom: "8px",
       }}
     >
-      ✦ READY TO GROW?
+      ARYANX DIGITAL
     </div>
 
     <p
       style={{
-        margin: "0 0 12px",
+        margin: "0 auto 16px",
         fontSize: "13px",
-        lineHeight: "1.5",
+        lineHeight: "1.6",
         opacity: 0.75,
       }}
     >
-      Build, automate & grow your business with AryanX Digital.
+      AI-Powered Digital Growth Partner for Businesses.
     </p>
 
-    <a
-      href="#contact"
-      className="primary-btn"
+    <div
       style={{
-        display: "inline-flex",
-        textDecoration: "none",
-        fontSize: "13px",
-        padding: "9px 16px",
+        display: "flex",
+        justifyContent: "center",
+        flexWrap: "wrap",
+        gap: "8px",
+        fontSize: "12px",
       }}
     >
-      Get Free Digital Audit →
-    </a>
+      <a href="#services">Services</a>
+      <span>•</span>
+      <a href="#about">About</a>
+      <span>•</span>
+      <a href="#ai">AI Solutions</a>
+      <span>•</span>
+      <a href="#contact">Contact</a>
+      <span>•</span>
+      <a href="/admin">Admin</a>
+    </div>
   </div>
-
 </footer>
 
 
