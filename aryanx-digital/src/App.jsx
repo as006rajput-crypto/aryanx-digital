@@ -80,7 +80,6 @@ function App() {
 
   // =========================================================
   // AUTH HEADERS
-  // ALWAYS USE LATEST TOKEN
   // =========================================================
 
   const getAuthHeaders = () => {
@@ -164,10 +163,6 @@ function App() {
         return;
       }
 
-      // =====================================================
-      // SUPPORT DIFFERENT TOKEN FORMATS
-      // =====================================================
-
       const token =
         result.token ||
         result.data?.token ||
@@ -188,10 +183,6 @@ function App() {
 
         return;
       }
-
-      // =====================================================
-      // SAVE JWT TOKEN
-      // =====================================================
 
       localStorage.setItem(
         "adminToken",
@@ -252,7 +243,6 @@ function App() {
 
   // =========================================================
   // LOAD CUSTOMER LEADS
-  // GET /api/leads REQUIRES JWT
   // =========================================================
 
   const loadLeads = async () => {
@@ -301,10 +291,6 @@ function App() {
         "GET /api/leads response:",
         result
       );
-
-      // =====================================================
-      // TOKEN EXPIRED / INVALID
-      // =====================================================
 
       if (
         response.status === 401 ||
@@ -390,9 +376,6 @@ function App() {
 
   // =========================================================
   // CUSTOMER INQUIRY SUBMIT
-  // PUBLIC API
-  // SAVES TO MONGODB
-  // THEN OPENS WHATSAPP
   // =========================================================
 
   const handleAuditSubmit = async (e) => {
@@ -409,6 +392,7 @@ function App() {
         "Please fill all customer inquiry fields.",
         "error"
       );
+
       return;
     }
 
@@ -423,10 +407,6 @@ function App() {
     };
 
     try {
-      // =====================================================
-      // SAVE CUSTOMER INQUIRY
-      // =====================================================
-
       const response = await fetch(
         API("/api/leads"),
         {
@@ -466,10 +446,6 @@ function App() {
         "success"
       );
 
-      // =====================================================
-      // WHATSAPP MESSAGE
-      // =====================================================
-
       const whatsappText =
         `Hello AryanX Digital,%0A%0A` +
         `I want a Free Digital Audit.%0A%0A` +
@@ -493,10 +469,6 @@ function App() {
         `https://wa.me/917070858521?text=${whatsappText}`,
         "_blank"
       );
-
-      // =====================================================
-      // RESET FORM
-      // =====================================================
 
       setBusiness("");
       setCustomerName("");
@@ -536,6 +508,7 @@ function App() {
         "Admin authentication required. Please login again.",
         "error"
       );
+
       return;
     }
 
@@ -643,6 +616,7 @@ function App() {
         "Admin authentication required. Please login again.",
         "error"
       );
+
       return;
     }
 
@@ -725,6 +699,7 @@ function App() {
         "Customer phone number not available.",
         "error"
       );
+
       return;
     }
 
@@ -862,8 +837,6 @@ function App() {
 
   // =========================================================
   // USE EFFECTS
-  // IMPORTANT:
-  // OLD TEST DATABASE useEffect REMOVED
   // =========================================================
 
   useEffect(() => {
@@ -1175,10 +1148,6 @@ function App() {
             </p>
           </div>
 
-          {/* =================================================
-              DASHBOARD STATS
-          ================================================= */}
-
           <div
             className="why-grid"
             style={{
@@ -1243,10 +1212,6 @@ function App() {
             </div>
           </div>
 
-          {/* =================================================
-              CLOSED STAT
-          ================================================= */}
-
           <div
             style={{
               textAlign: "center",
@@ -1260,10 +1225,6 @@ function App() {
               </strong>
             </span>
           </div>
-
-          {/* =================================================
-              REFRESH
-          ================================================= */}
 
           <div
             style={{
@@ -1298,10 +1259,6 @@ function App() {
             </a>
           </div>
 
-          {/* =================================================
-              CUSTOMER INQUIRIES
-          ================================================= */}
-
           {leadsLoading ? (
             <div
               style={{
@@ -1332,9 +1289,7 @@ function App() {
               </p>
             </div>
           ) : (
-            <div
-              className="backend-data-grid"
-            >
+            <div className="backend-data-grid">
               {leads.map((lead) => (
                 <div
                   className="backend-card"
@@ -1495,10 +1450,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* =====================================================
-          TOAST
-      ===================================================== */}
-
       {toast && (
         <div
           className={`toast toast-${toast.type}`}
@@ -2132,12 +2083,6 @@ function App() {
           </div>
         </div>
 
-        {/* =================================================
-            CUSTOMER AUDIT FORM
-            SAVES TO MONGODB
-            THEN OPENS WHATSAPP
-        ================================================= */}
-
         <form
           className="audit-form"
           onSubmit={
@@ -2328,6 +2273,161 @@ function App() {
         >
           WhatsApp Us
         </a>
+
+        {/* =================================================
+            NEW PROFESSIONAL DIALOGUE BOX
+        ================================================= */}
+
+        <div
+          style={{
+            width: "min(900px, 92%)",
+            margin: "55px auto 10px",
+            padding: "35px 30px",
+            borderRadius: "24px",
+            position: "relative",
+            overflow: "hidden",
+            background:
+              "linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,47,82,0.98))",
+            border:
+              "1px solid rgba(59,130,246,0.35)",
+            boxShadow:
+              "0 20px 60px rgba(0,0,0,0.25), 0 0 35px rgba(37,99,235,0.12)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              width: "180px",
+              height: "180px",
+              borderRadius: "50%",
+              background:
+                "rgba(37,99,235,0.16)",
+              filter: "blur(45px)",
+              top: "-80px",
+              left: "-50px",
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              width: "160px",
+              height: "160px",
+              borderRadius: "50%",
+              background:
+                "rgba(6,182,212,0.12)",
+              filter: "blur(45px)",
+              bottom: "-80px",
+              right: "-40px",
+            }}
+          />
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "52px",
+                height: "52px",
+                borderRadius: "50%",
+                marginBottom: "15px",
+                background:
+                  "linear-gradient(135deg, #2563eb, #06b6d4)",
+                color: "#fff",
+                fontSize: "23px",
+                boxShadow:
+                  "0 8px 25px rgba(37,99,235,0.35)",
+              }}
+            >
+              ✦
+            </div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                letterSpacing: "2px",
+                color: "#60a5fa",
+                marginBottom: "10px",
+              }}
+            >
+              ARYANX DIGITAL
+            </div>
+
+            <h2
+              style={{
+                margin: "0 0 12px",
+                color: "#ffffff",
+                fontSize:
+                  "clamp(24px, 4vw, 36px)",
+                lineHeight: "1.2",
+              }}
+            >
+              Ready to Grow Your Business?
+            </h2>
+
+            <p
+              style={{
+                maxWidth: "650px",
+                margin: "0 auto 22px",
+                color: "#cbd5e1",
+                fontSize: "15px",
+                lineHeight: "1.7",
+              }}
+            >
+              Let AryanX Digital help you
+              build a smarter, AI-powered
+              digital presence and turn
+              technology into real business
+              growth.
+            </p>
+
+            <p
+              style={{
+                maxWidth: "700px",
+                margin: "0 auto 25px",
+                color: "#94a3b8",
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              Websites • AI Automation •
+              Digital Marketing • Lead
+              Generation • Business Growth
+            </p>
+
+            <a
+              href="#contact"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "13px 24px",
+                borderRadius: "10px",
+                textDecoration: "none",
+                color: "#ffffff",
+                fontWeight: "700",
+                fontSize: "14px",
+                background:
+                  "linear-gradient(135deg, #2563eb, #06b6d4)",
+                boxShadow:
+                  "0 10px 25px rgba(37,99,235,0.3)",
+                transition:
+                  "transform 0.2s ease",
+              }}
+            >
+              Start Your Digital Journey →
+            </a>
+          </div>
+        </div>
       </footer>
 
       {/* =====================================================
@@ -2571,4 +2671,3 @@ function App() {
 }
 
 export default App;
-
