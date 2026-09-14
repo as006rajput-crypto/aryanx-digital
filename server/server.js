@@ -1,3 +1,9 @@
+const dns = require("dns");
+
+dns.setServers([
+  "8.8.8.8",
+  "1.1.1.1",
+]);
 require("dotenv").config();
 
 const express = require("express");
@@ -41,7 +47,6 @@ app.use(
 );
 
 app.use(express.json());
-
 app.use(express.urlencoded({ extended: true }));
 
 /* =========================
@@ -56,12 +61,11 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    database:
-      mongoose.connection.readyState === 1
-        ? "connected"
-        : "disconnected",
+  const connected = mongoose.connection.readyState === 1;
+
+  return res.status(connected ? 200 : 503).json({
+    success: connected,
+    database: connected ? "connected" : "disconnected",
   });
 });
 
@@ -116,12 +120,6 @@ app.post("/api/admin/login", async (req, res) => {
 
     let validPassword = false;
 
-    /*
-      Supports both:
-      1. Plain password from environment
-      2. bcrypt hashed password
-    */
-
     if (ADMIN_PASSWORD.startsWith("$2")) {
       validPassword = await bcrypt.compare(
         password,
@@ -168,9 +166,8 @@ app.post("/api/admin/login", async (req, res) => {
    CUSTOMER LEADS
 ========================= */
 
-/*
-  PUBLIC:
-  Customer inquiry submit
+/* PUBLIC:
+   Customer inquiry submit
 */
 
 app.post("/api/leads", async (req, res) => {
@@ -196,6 +193,13 @@ app.post("/api/leads", async (req, res) => {
       });
     }
 
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: "Database is currently unavailable",
+      });
+    }
+
     const newLead = new Lead({
       business: business.trim(),
       name: name.trim(),
@@ -212,10 +216,7 @@ app.post("/api/leads", async (req, res) => {
       data: savedLead,
     });
   } catch (error) {
-    console.error(
-      "POST /api/leads error:",
-      error
-    );
+    console.error("POST /api/leads error:", error);
 
     return res.status(500).json({
       success: false,
@@ -225,9 +226,8 @@ app.post("/api/leads", async (req, res) => {
   }
 });
 
-/*
-  ADMIN:
-  Get all customer inquiries
+/* ADMIN:
+   Get all customer inquiries
 */
 
 app.get(
@@ -235,6 +235,13 @@ app.get(
   authenticateAdmin,
   async (req, res) => {
     try {
+      if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+          success: false,
+          message: "Database is currently unavailable",
+        });
+      }
+
       const leads = await Lead.find().sort({
         createdAt: -1,
       });
@@ -245,10 +252,7 @@ app.get(
         data: leads,
       });
     } catch (error) {
-      console.error(
-        "GET /api/leads error:",
-        error
-      );
+      console.error("GET /api/leads error:", error);
 
       return res.status(500).json({
         success: false,
@@ -259,9 +263,8 @@ app.get(
   }
 );
 
-/*
-  ADMIN:
-  Update lead status
+/* ADMIN:
+   Update lead status
 */
 
 app.put(
@@ -322,9 +325,8 @@ app.put(
   }
 );
 
-/*
-  ADMIN:
-  Delete lead
+/* ADMIN:
+   Delete lead
 */
 
 app.delete(
@@ -377,12 +379,14 @@ app.get(
         createdAt: -1,
       });
 
-      res.json({
+      return res.json({
         success: true,
         data: tests,
       });
     } catch (error) {
-      res.status(500).json({
+      console.error("GET /api/tests:", error);
+
+      return res.status(500).json({
         success: false,
         message: "Failed to load test data",
         error: error.message,
@@ -409,7 +413,7 @@ app.post("/api/test", async (req, res) => {
 
     const savedTest = await test.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Data saved successfully",
       data: savedTest,
@@ -417,7 +421,7 @@ app.post("/api/test", async (req, res) => {
   } catch (error) {
     console.error("POST /api/test:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to save data",
       error: error.message,
@@ -452,13 +456,15 @@ app.put(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: "Data updated successfully",
         data: updatedTest,
       });
     } catch (error) {
-      res.status(500).json({
+      console.error("PUT /api/test/:id:", error);
+
+      return res.status(500).json({
         success: false,
         message: "Failed to update data",
         error: error.message,
@@ -484,13 +490,15 @@ app.delete(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: "Data deleted successfully",
         data: deletedTest,
       });
     } catch (error) {
-      res.status(500).json({
+      console.error("DELETE /api/test/:id:", error);
+
+      return res.status(500).json({
         success: false,
         message: "Failed to delete data",
         error: error.message,
@@ -621,41 +629,83 @@ app.post("/api/ai/chat", async (req, res) => {
 ========================= */
 
 app.use((req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     success: false,
     message: `Route not found: ${req.method} ${req.originalUrl}`,
   });
 });
 
 /* =========================
-   DATABASE + SERVER
+   DATABASE CONNECTION
 ========================= */
 
-if (!MONGODB_URI) {
-  console.error(
-    "MONGODB_URI is missing from environment variables."
-  );
-  process.exit(1);
-}
-
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
-    console.log(
-      "MongoDB Connected Successfully"
-    );
-
-    app.listen(PORT, () => {
-      console.log(
-        `AryanX Digital Backend running on port ${PORT}`
-      );
-    });
-  })
-  .catch((error) => {
+const connectDatabase = async () => {
+  if (!MONGODB_URI) {
     console.error(
-      "MongoDB Connection Failed:",
-      error.message
+      "MONGODB_URI is missing from environment variables."
     );
 
-    process.exit(1);
+    return false;
+  }
+
+  try {
+    console.log("Connecting to MongoDB Atlas...");
+
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
+
+    console.log("MongoDB Connected Successfully");
+
+    return true;
+  } catch (error) {
+    console.error("MongoDB Connection Failed");
+    console.error("Error Name:", error.name);
+    console.error("Error Message:", error.message);
+
+    if (error.reason) {
+      console.error("MongoDB Reason:", error.reason);
+    }
+
+    return false;
+  }
+};
+
+/* =========================
+   MONGOOSE EVENTS
+========================= */
+
+mongoose.connection.on("connected", () => {
+  console.log("MongoDB connection established");
+});
+
+mongoose.connection.on("error", (error) => {
+  console.error("MongoDB Runtime Error:", error.message);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.error("MongoDB disconnected");
+});
+
+/* =========================
+   START SERVER
+========================= */
+
+const startServer = async () => {
+  await connectDatabase();
+
+  app.listen(PORT, () => {
+    console.log(
+      `AryanX Digital Backend running on port ${PORT}`
+    );
+
+    console.log(
+      `Health Check: http://localhost:${PORT}/api/health`
+    );
   });
+};
+
+startServer();
+
