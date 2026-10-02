@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import "./App.css";
 
 const API_URL =
@@ -42,7 +41,6 @@ function App() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [businessType, setBusinessType] = useState("");
-
   const [leadSubmitting, setLeadSubmitting] = useState(false);
 
   // =========================================================
@@ -208,7 +206,6 @@ function App() {
       setTimeout(() => {
         window.location.reload();
       }, 500);
-
     } catch (error) {
       console.error(
         "Admin Login Error:",
@@ -219,7 +216,6 @@ function App() {
         "Unable to connect to backend server.",
         "error"
       );
-
     } finally {
       setLeadsLoading(false);
     }
@@ -334,7 +330,6 @@ function App() {
           "error"
         );
       }
-
     } catch (error) {
       console.error(
         "Load Leads Error:",
@@ -347,7 +342,6 @@ function App() {
         "Unable to load customer inquiries.",
         "error"
       );
-
     } finally {
       setLeadsLoading(false);
     }
@@ -367,13 +361,11 @@ function App() {
         "Customer inquiries refreshed!",
         "success"
       );
-
     } catch (error) {
       console.error(
         "Refresh Leads Error:",
         error
       );
-
     } finally {
       setLeadRefreshing(false);
     }
@@ -480,7 +472,6 @@ function App() {
       setPhone("");
       setEmail("");
       setBusinessType("");
-
     } catch (error) {
       console.error(
         "Customer Inquiry Error:",
@@ -491,7 +482,6 @@ function App() {
         "Unable to connect to backend. Please try again.",
         "error"
       );
-
     } finally {
       setLeadSubmitting(false);
     }
@@ -584,7 +574,6 @@ function App() {
         "Lead status updated!",
         "success"
       );
-
     } catch (error) {
       console.error(
         "Update Lead Status Error:",
@@ -595,7 +584,6 @@ function App() {
         "Unable to update lead status.",
         "error"
       );
-
     } finally {
       setLeadUpdatingId(null);
     }
@@ -683,7 +671,6 @@ function App() {
         "Customer inquiry deleted.",
         "success"
       );
-
     } catch (error) {
       console.error(
         "Delete Lead Error:",
@@ -694,7 +681,6 @@ function App() {
         "Unable to delete customer inquiry.",
         "error"
       );
-
     } finally {
       setLeadDeletingId(null);
     }
@@ -718,9 +704,7 @@ function App() {
       lead.phone
     ).replace(/\D/g, "");
 
-    if (
-      cleanPhone.length === 10
-    ) {
+    if (cleanPhone.length === 10) {
       cleanPhone = `91${cleanPhone}`;
     }
 
@@ -827,7 +811,6 @@ function App() {
           text: aiText,
         },
       ]);
-
     } catch (error) {
       console.error(
         "AI Chat Error:",
@@ -842,7 +825,6 @@ function App() {
             "Sorry, I'm unable to connect to AryanX AI right now. Please try again.",
         },
       ]);
-
     } finally {
       setAiLoading(false);
     }
@@ -895,7 +877,6 @@ function App() {
   ) {
     return (
       <div className="app">
-
         {toast && (
           <div
             className={`toast toast-${toast.type}`}
@@ -965,6 +946,19 @@ function App() {
               <span>
                 ARYANX DIGITAL
               </span>
+
+              <div
+                style={{
+                  marginTop: "6px",
+                  fontSize: "12px",
+                  opacity: 0.75,
+                }}
+              >
+                Founder & CEO:{" "}
+                <strong>
+                  Aryan Raj
+                </strong>
+              </div>
 
               <h2>
                 Admin Login
@@ -1070,7 +1064,6 @@ function App() {
 
     return (
       <div className="app">
-
         {toast && (
           <div
             className={`toast toast-${toast.type}`}
@@ -1106,37 +1099,47 @@ function App() {
         )}
 
         <nav className="navbar">
-
           <div className="logo">
-            <img
-              src="/logo.jpg"
-              alt="AryanX Digital"
-            />
-          </div>
+            <strong>
+              ARYANX DIGITAL
+            </strong>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "15px",
-            }}
-          >
             <span>
-              Admin:{" "}
-              {adminEmail}
+              AI-Powered Digital Growth
+              Partner for Businesses.
             </span>
 
-            <button
-              type="button"
-              className="nav-btn"
-              onClick={
-                handleAdminLogout
-              }
-            >
-              Logout
-            </button>
+            <div className="founder-name">
+              Founder & CEO:{" "}
+              <strong>
+                Aryan Raj
+              </strong>
+            </div>
           </div>
 
+          <div className="nav-links">
+            <a href="/">
+              Website
+            </a>
+
+            <a href="/">
+              Home
+            </a>
+
+            <a href="/admin">
+              Admin
+            </a>
+          </div>
+
+          <button
+            type="button"
+            className="nav-btn"
+            onClick={
+              handleAdminLogout
+            }
+          >
+            Logout
+          </button>
         </nav>
 
         <section
@@ -1146,7 +1149,6 @@ function App() {
           }}
         >
           <div className="section-heading">
-
             <span>
               ARYANX DIGITAL ADMIN
             </span>
@@ -1164,7 +1166,6 @@ function App() {
               received through the Free
               Digital Audit form.
             </p>
-
           </div>
 
           <div
@@ -1276,6 +1277,16 @@ function App() {
             >
               View Website
             </a>
+
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={
+                handleAdminLogout
+              }
+            >
+              Logout
+            </button>
           </div>
 
           {leadsLoading ? (
@@ -1289,9 +1300,7 @@ function App() {
                 Loading customer inquiries...
               </h3>
             </div>
-
           ) : leads.length === 0 ? (
-
             <div
               className="backend-form"
               style={{
@@ -1309,13 +1318,9 @@ function App() {
                 here.
               </p>
             </div>
-
           ) : (
-
             <div className="backend-data-grid">
-
               {leads.map((lead) => (
-
                 <div
                   className="backend-card"
                   key={lead._id}
@@ -1461,12 +1466,9 @@ function App() {
                     </button>
                   </div>
                 </div>
-
               ))}
-
             </div>
           )}
-
         </section>
       </div>
     );
@@ -1478,6 +1480,10 @@ function App() {
 
   return (
     <div className="app">
+
+      {/* =====================================================
+          TOAST
+      ===================================================== */}
 
       {toast && (
         <div
@@ -1518,16 +1524,25 @@ function App() {
       ===================================================== */}
 
       <nav className="navbar">
-
         <div className="logo">
-          <img
-            src="/logo.jpg"
-            alt="AryanX Digital"
-          />
+
+          <div className="brand">
+            <img
+              src="/logo.jpg"
+              alt="AryanX Digital"
+            />
+          </div>
+
+          <div className="founder-name">
+            Founder & CEO:{" "}
+            <strong>
+              Aryan Raj
+            </strong>
+          </div>
+
         </div>
 
         <div className="nav-links">
-
           <a href="#services">
             Services
           </a>
@@ -1544,15 +1559,17 @@ function App() {
             Contact
           </a>
 
+          <a href="/admin">
+            Admin
+          </a>
         </div>
 
         <a
-          href="#contact"
-          className="nav-btn"
-        >
-          Get Started
-        </a>
-
+  href="tel:+917070858521"
+  className="founder-call-btn"
+>
+  📞 Call
+</a>
       </nav>
 
       {/* =====================================================
@@ -1684,7 +1701,7 @@ function App() {
       </section>
 
       {/* =====================================================
-          SERVICES
+          SERVICES & PRICING
       ===================================================== */}
 
       <section
@@ -1695,144 +1712,276 @@ function App() {
         <div className="section-heading">
 
           <span>
-            OUR SERVICES
+            SERVICES & PRICING
           </span>
 
           <h2>
-            Choose the right
+            Websites built to
             <br />
             <em>
-              growth system.
+              grow your business.
             </em>
           </h2>
 
           <p>
-            Simple digital solutions
-            designed to help your business
-            build, automate and grow.
+            Choose the right website package
+            for your business. Every package is
+            designed to be fast, responsive and
+            conversion-focused.
           </p>
 
         </div>
 
         <div className="services-grid">
 
-          <div className="service-card">
+          {/* STARTER WEBSITE */}
 
-            <div className="service-icon">
-              ◈
+          <div className="service-card pricing-card starter-card">
+
+            <div className="pricing-top">
+
+              <div className="service-icon">
+                💜
+              </div>
+
+              <span className="plan-tag">
+                STARTER
+              </span>
+
             </div>
 
             <h3>
-              Starter
+              Starter Website
             </h3>
 
             <p>
-              Perfect for businesses that
-              are just getting started online.
+              A professional website for
+              individuals, startups and small
+              businesses that want to build
+              their online presence.
             </p>
 
+            <div className="service-price">
+
+              <span>
+                Starting at
+              </span>
+
+              <strong>
+                ₹4,999
+              </strong>
+
+            </div>
+
             <ul>
+
               <li>
-                Professional Website
+                Professional responsive website
               </li>
 
               <li>
-                Google Business Setup
+                Up to 5 pages
               </li>
 
               <li>
-                Basic Social Media Setup
+                Mobile & desktop optimized
               </li>
 
               <li>
-                Contact & WhatsApp Integration
+                WhatsApp integration
               </li>
+
+              <li>
+                Contact / inquiry form
+              </li>
+
+              <li>
+                Basic SEO setup
+              </li>
+
             </ul>
 
-            <a href="#contact">
+            <a
+              href="#contact"
+              className="primary-btn service-btn"
+            >
               Get Started →
             </a>
 
           </div>
 
-          <div className="service-card featured">
+          {/* GROWTH WEBSITE */}
+
+          <div className="service-card pricing-card growth-card featured">
 
             <div className="popular">
               MOST POPULAR
             </div>
 
-            <div className="service-icon">
-              ✦
+            <div className="pricing-top">
+
+              <div className="service-icon">
+                💙
+              </div>
+
+              <span className="plan-tag">
+                GROWTH
+              </span>
+
             </div>
 
             <h3>
-              Growth
+              Growth Website
             </h3>
 
             <p>
-              For businesses looking to
-              attract more customers online.
+              A complete business website
+              designed for lead generation,
+              branding and long-term digital
+              growth.
             </p>
 
+            <div className="service-price">
+
+              <span>
+                Starting at
+              </span>
+
+              <strong>
+                ₹9,999
+              </strong>
+
+            </div>
+
             <ul>
+
               <li>
                 Everything in Starter
               </li>
 
               <li>
-                Social Media Management
+                Up to 8–10 pages
               </li>
 
               <li>
-                Lead Generation
+                Advanced responsive design
               </li>
 
               <li>
-                Digital Marketing
+                Lead generation setup
               </li>
+
+              <li>
+                WhatsApp & social integration
+              </li>
+
+              <li>
+                Advanced SEO setup
+              </li>
+
+              <li>
+                Google Analytics setup
+              </li>
+
+              <li>
+                30 days support
+              </li>
+
             </ul>
 
-            <a href="#contact">
-              Grow With Us →
+            <a
+              href="#contact"
+              className="primary-btn service-btn"
+            >
+              Get Started →
             </a>
 
           </div>
 
-          <div className="service-card">
+          {/* E-COMMERCE WEBSITE */}
 
-            <div className="service-icon">
-              ◎
+          <div className="service-card pricing-card ecommerce-card">
+
+            <div className="pricing-top">
+
+              <div className="service-icon">
+                💚
+              </div>
+
+              <span className="plan-tag">
+                E-COMMERCE
+              </span>
+
             </div>
 
             <h3>
-              AI Business
+              E-Commerce Website
             </h3>
 
             <p>
-              Smart automation systems for
-              modern businesses.
+              Launch your online store with a
+              modern shopping experience
+              designed for products, orders
+              and business growth.
             </p>
 
+            <div className="service-price">
+
+              <span>
+                Starting at
+              </span>
+
+              <strong>
+                ₹14,999
+              </strong>
+
+            </div>
+
             <ul>
+
               <li>
-                AI Customer Support
+                Professional online store
               </li>
 
               <li>
-                WhatsApp Automation
+                Product catalog setup
               </li>
 
               <li>
-                Lead Automation
+                Shopping cart
               </li>
 
               <li>
-                Business Analytics
+                Order management setup
               </li>
+
+              <li>
+                WhatsApp order integration
+              </li>
+
+              <li>
+                Payment gateway setup support
+              </li>
+
+              <li>
+                Mobile responsive design
+              </li>
+
+              <li>
+                Basic analytics
+              </li>
+
+              <li>
+                30 days support
+              </li>
+
             </ul>
 
-            <a href="#contact">
-              Build With AI →
+            <a
+              href="#contact"
+              className="primary-btn service-btn"
+            >
+              Get Started →
             </a>
 
           </div>
@@ -2263,6 +2412,7 @@ function App() {
               leadSubmitting
             }
           >
+
             <option value="">
               Select Business Type
             </option>
@@ -2298,6 +2448,7 @@ function App() {
             <option value="Other">
               Other
             </option>
+
           </select>
 
           <button
@@ -2317,7 +2468,7 @@ function App() {
       </section>
 
       {/* =====================================================
-          PROFESSIONAL FOOTER CARD
+          FOOTER
       ===================================================== */}
 
       <footer
@@ -2326,18 +2477,22 @@ function App() {
           textAlign: "center",
         }}
       >
+
         <div
           style={{
             maxWidth: "560px",
             margin: "0 auto",
             padding: "24px 22px",
             borderRadius: "18px",
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.14)",
+            background:
+              "rgba(255,255,255,0.06)",
+            border:
+              "1px solid rgba(255,255,255,0.14)",
             boxShadow:
               "0 12px 35px rgba(0,0,0,0.12)",
           }}
         >
+
           <div
             style={{
               fontSize: "18px",
@@ -2351,14 +2506,28 @@ function App() {
 
           <p
             style={{
-              margin: "0 0 16px",
+              margin: "0 0 8px",
               fontSize: "13px",
               lineHeight: "1.6",
               opacity: 0.75,
             }}
           >
-            AI-Powered Digital Growth Partner for Businesses.
+            AI-Powered Digital Growth
+            Partner for Businesses.
           </p>
+
+          <div
+            style={{
+              fontSize: "12px",
+              marginBottom: "16px",
+              opacity: 0.8,
+            }}
+          >
+            Founder & CEO:{" "}
+            <strong>
+              Aryan Raj
+            </strong>
+          </div>
 
           <div
             style={{
@@ -2370,6 +2539,7 @@ function App() {
               fontSize: "12px",
             }}
           >
+
             <a href="#services">
               Services
             </a>
@@ -2397,13 +2567,101 @@ function App() {
             <a href="/admin">
               Admin
             </a>
+
           </div>
+
         </div>
+
       </footer>
 
       {/* =====================================================
+          FLOATING FOUNDER PROFILE CARD
+      ===================================================== */}
+
+      <div className="founder-floating-card">
+
+        <div className="founder-floating-top">
+
+          <div className="founder-photo-wrap">
+
+            {/* IMPORTANT:
+                Actual file in public folder is:
+                aryan-profile.jpg.jpg
+            */}
+
+            <img
+              src="/aryan-profile.jpg.jpg"
+              alt="Aryan Raj - Founder & CEO"
+              className="founder-floating-photo"
+              onError={(e) => {
+                console.error(
+                  "Founder profile image could not be loaded:",
+                  e.currentTarget.src
+                );
+              }}
+            />
+
+            <span className="founder-online-dot"></span>
+
+          </div>
+
+          <div className="founder-floating-info">
+
+            <span className="founder-floating-label">
+              FOUNDER & CEO
+            </span>
+
+            <h3>
+              Aryan Raj
+            </h3>
+
+            <p>
+              ARYANX Digital
+            </p>
+
+          </div>
+
+        </div>
+
+        <div className="founder-floating-divider"></div>
+
+        <p className="founder-floating-description">
+          AI-Powered Digital Growth Partner
+          helping businesses build, automate
+          and grow.
+        </p>
+
+        <div className="founder-floating-actions">
+
+          <a
+            href="tel:+917070858521"
+            className="founder-call-btn"
+          >
+            📞 Call
+          </a>
+
+          <a
+            href="https://wa.me/917070858521"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="founder-whatsapp-btn"
+          >
+            💬 WhatsApp
+          </a>
+
+        </div>
+
+        <a
+          href="mailto:aryan7070t@gmail.com"
+          className="founder-email-link"
+        >
+          ✉️ aryan7070t@gmail.com
+        </a>
+
+      </div>
+
+      {/* =====================================================
           WHATSAPP FLOATING BUTTON
-          RIGHT BOTTOM SIDE
       ===================================================== */}
 
       <a
@@ -2438,6 +2696,7 @@ function App() {
             "scale(1)";
         }}
       >
+
         <svg
           width="30"
           height="30"
@@ -2447,6 +2706,7 @@ function App() {
         >
           <path d="M20.52 3.48A11.86 11.86 0 0 0 12.04 0C5.48 0 .14 5.34.14 11.9c0 2.1.55 4.15 1.6 5.96L.04 24l6.28-1.65a11.88 11.88 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.16-3.43-8.43ZM12.05 21.8a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.73.98.99-3.64-.23-.37a9.85 9.85 0 0 1-1.51-5.28c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.9 6.99c0 5.45-4.44 9.9-9.92 9.9Zm5.42-7.41c-.3-.15-1.77-.87-2.05-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.74-1.64-2.04-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.09 4.5.71.31 1.26.5 1.69.64.71.23 1.35.2 1.86.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35Z" />
         </svg>
+
       </a>
 
       {/* =====================================================
@@ -2507,6 +2767,7 @@ function App() {
               "1px solid rgba(37,99,235,0.15)",
           }}
         >
+
           <div
             style={{
               padding: "18px",
@@ -2519,7 +2780,9 @@ function App() {
               alignItems: "center",
             }}
           >
+
             <div>
+
               <strong>
                 ✦ ARYANX AI
               </strong>
@@ -2533,6 +2796,7 @@ function App() {
               >
                 AI Business Assistant
               </div>
+
             </div>
 
             <button
@@ -2551,6 +2815,7 @@ function App() {
             >
               ×
             </button>
+
           </div>
 
           <div
@@ -2561,6 +2826,7 @@ function App() {
               background: "#f8fafc",
             }}
           >
+
             {chatMessages.map(
               (msg, index) => (
                 <div
@@ -2575,6 +2841,7 @@ function App() {
                       "12px",
                   }}
                 >
+
                   <div
                     style={{
                       maxWidth: "82%",
@@ -2605,6 +2872,7 @@ function App() {
                   >
                     {msg.text}
                   </div>
+
                 </div>
               )
             )}
@@ -2617,6 +2885,7 @@ function App() {
                     "flex-start",
                 }}
               >
+
                 <div
                   style={{
                     padding:
@@ -2633,8 +2902,10 @@ function App() {
                 >
                   AryanX AI is thinking...
                 </div>
+
               </div>
             )}
+
           </div>
 
           <form
@@ -2650,6 +2921,7 @@ function App() {
               background: "#fff",
             }}
           >
+
             <input
               type="text"
               placeholder="Ask AryanX AI..."
@@ -2682,7 +2954,9 @@ function App() {
             >
               →
             </button>
+
           </form>
+
         </div>
       )}
 
